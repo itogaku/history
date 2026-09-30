@@ -182,6 +182,7 @@ mark{background:var(--shu-soft);color:inherit;padding:0 1px}
 .badge{font-size:11px;font-weight:700;color:var(--shu);border:1px solid var(--shu);border-radius:3px;padding:0 6px;margin-left:6px;line-height:1.6}
 .badge.del{color:var(--muted);border-color:var(--muted)}
 .nen.gone .t{opacity:.55;text-decoration:line-through;text-decoration-color:var(--muted)}
+.th.use{border-color:var(--ai);color:var(--ai)}
 .alts{font-size:12px;color:var(--muted);margin-left:4px}
 .es-a{font-size:13px;color:var(--muted)}
 .editor{display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -738,13 +739,14 @@ const ESSAY = [
 ].map((e,i)=>({...e,id:i,era:yearEra(e.y)}));
 function yearEra(y){return y<1185?'古代':y<1573?'中世':y<1868?'近世':y<1946?'近代':'現代'}
 
+const EUSE={"743": ["人口"], "894": ["唐"], "1016": ["天皇"], "1192": ["領地"], "1221": ["西日本"], "1232": ["武士"], "1297": ["領地"], "1404": ["貿易船"], "1467": ["身分"], "1577": ["営業"], "1588": ["百姓"], "1590": ["百姓"], "1635": ["江戸"], "1639": ["像"], "1641": ["ポルトガル"], "1716": ["大名"], "1772": ["長崎"], "1841": ["商品"], "1858": ["裁判", "輸入品"], "1859": ["国内"], "1871": ["政府"], "1873": ["土地の所有者"], "1883": ["欧米"], "1889": ["天皇"], "1895": ["清"], "1902": ["東アジア"], "1905": ["国民"], "1918": ["ロシア"], "1925": ["制限"], "1929": ["本国"], "1933": ["リットン調査団"], "1946": ["政府"], "1967": ["工場"], "1973": ["物価"], "752": ["遣唐使"], "1000": ["遣唐使"], "1224": ["教え"], "1489": ["足利義政"], "1576": ["経済力"], "1640": ["島原・天草一揆"], "1689": ["担い手"], "1831": ["浮世絵"]};
 const ETAG={743:'land',894:'chn heian',1016:'heian',1192:'kama',1221:'kama',1232:'kama',1297:'kama',1404:'muro chn',1467:'muro unif',1577:'unif',1588:'unif',1590:'unif land',1635:'edo',1639:'xian edo',1641:'edo xian',1716:'reform',1772:'reform',1841:'reform',1858:'ship treaty',1859:'ship',1871:'meiji',1873:'meiji land',1883:'treaty',1889:'jiyu',1895:'war',1902:'war treaty',1905:'war',1918:'taisho social',1925:'taisho social',1929:'path',1933:'path intl',1946:'senryo land',1967:'keizai',1973:'keizai'};
-ESSAY.forEach(e=>{ if(!e.tags) e.tags=(ETAG[e.y]||'').split(' ').filter(Boolean); });
+ESSAY.forEach(e=>{ if(!e.tags) e.tags=(ETAG[e.y]||'').split(' ').filter(Boolean); if(!e.use) e.use=(EUSE[e.y]||[]).slice(); });
 
 /* ---------- 編集（削除・文章の変更・復活） ---------- */
 function hash(s){let h=5381;for(const c of s)h=((h*33)^c.codePointAt(0))>>>0;return h.toString(36)}
 const ORIG_E=E.map(e=>({text:e.text,alts:e.alts.slice()}));
-const ORIG_S=ESSAY.map(e=>({q:e.q,a:e.a,kw:e.kw.map(k=>k.slice())}));
+const ORIG_S=ESSAY.map(e=>({q:e.q,a:e.a,kw:e.kw.map(k=>k.slice()),use:(e.use||[]).slice()}));
 E.forEach(e=>{e.sid='ev-'+(e.y<0?'m'+(-e.y):e.y)+'-'+hash(e.text)});
 ESSAY.forEach(e=>{e.sid='es-'+e.y+'-'+hash(e.q)});
 const ITEM={}; E.forEach((e,i)=>ITEM[e.sid]={kind:'ev',i}); ESSAY.forEach((e,i)=>ITEM[e.sid]={kind:'es',i});
@@ -757,7 +759,7 @@ function applyEdits(){
   E.forEach((e,i)=>{const o=EDITS[e.sid]; const c=o&&o.cur; const b=c||ORIG_E[i];
     e.text=b.text; e.alts=b.alts.slice(); e.key=e.alts[0]; e.deleted=!!(o&&o.deleted); e.edited=!!c;});
   ESSAY.forEach((e,i)=>{const o=EDITS[e.sid]; const c=o&&o.cur; const b=c||ORIG_S[i];
-    e.q=b.q; e.a=b.a; e.kw=b.kw.map(k=>k.slice()); e.deleted=!!(o&&o.deleted); e.edited=!!c;});
+    e.q=b.q; e.a=b.a; e.kw=b.kw.map(k=>k.slice()); e.use=(b.use||ORIG_S[i].use||[]).slice(); e.deleted=!!(o&&o.deleted); e.edited=!!c;});
 }
 const Store={mode:'local', db:null, canEdit:true, busy:false,
   loadLocal(){
@@ -808,7 +810,8 @@ function readEditor(sid){
   const q=$('#edQ').value.trim(), a=$('#edA').value.trim();
   const kw=$('#edKw').value.split(/[、,，]/).map(g=>g.split(/[／\/|｜]/).map(s=>s.trim()).filter(Boolean)).filter(g=>g.length);
   if(!q) return err('問題文を入力してください。'); if(!a) return err('解答例を入力してください。'); if(!kw.length) return err('採点キーワードを1つ以上入力してください。');
-  return {v:{q,a,kw}};
+  const use=$('#edUse').value.split(/[、,，・]/).map(x=>x.trim()).filter(Boolean);
+  return {v:{q,a,kw,use}};
 }
 const fmtAt=t=>{const d=new Date(t);return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`};
 function editorHTML(sid){
@@ -820,6 +823,7 @@ function editorHTML(sid){
   }else{
     h+=`<label for="edQ">問題文</label><textarea id="edQ" rows="2">${esc(it.q)}</textarea>
         <label for="edA">解答例</label><textarea id="edA" rows="3">${esc(it.a)}</textarea>
+        <label for="edUse">指定語句（問題に表示する。答えそのものにならない語を1〜2個）</label><input id="edUse" class="search" value="${esc((it.use||[]).join('、'))}">
         <label for="edKw">採点キーワード（、で区切る。同じ意味の別の語は ／ でつなぐ）</label><input id="edKw" class="search" value="${esc(it.kw.map(k=>k.join('／')).join('、'))}">`;
   }
   h+=`<p class="ed-err" id="edErr" role="alert"></p>
@@ -1537,7 +1541,7 @@ function renderControls(){
       [['rand','いろいろ'],...Object.entries(EXAM_FMTS)].map(([k,v])=>`<button class="chip" data-xf="${k}" aria-pressed="${S.examFmt===k}">${v}</button>`).join('');
   }else if(S.mode==='essay'){
     h=`<span class="lab">テーマ</span>${themeSelect('genTheme',S.theme,false,ecnt)}</div><div class="row"><span class="lab">設定</span>
-       <button class="chip" data-hint aria-pressed="${S.hint}">指定語句を表示する</button>`;
+       <span class="lab" style="min-width:auto">指定語句</span><button class="chip" data-hintset="1" aria-pressed="${S.hint}">あり</button><button class="chip" data-hintset="0" aria-pressed="${!S.hint}">なし</button>`;
   }else if(S.mode==='list'){
     h=`<span class="lab">テーマ</span><select class="sel" id="themeSel" aria-label="テーマで絞り込む"><option value="all">すべてのテーマ</option>${
       Object.entries(THEMES).map(([k,v])=>`<option value="${k}" ${S.listTheme===k?'selected':''}>${esc(v)}（${cnt(k)}）</option>`).join('')
@@ -1649,7 +1653,7 @@ function renderFill(c){
 function renderEssay(c){
   const q=c.q;
   let h=`<p class="prompt">${esc(q.q)}</p>`;
-  if(S.hint) h+=`<div class="kw-list"><span style="font-size:12px;color:var(--muted)">指定語句</span>${q.kw.map(k=>`<span class="kw">${esc(k[0])}</span>`).join('')}</div>`;
+  if(S.hint&&q.use&&q.use.length) h+=`<div class="kw-list"><span style="font-size:12px;color:var(--muted)">次の語句を使って書きなさい</span>${q.use.map(k=>`<span class="kw">${esc(k)}</span>`).join('')}</div>`;
   h+=`<textarea id="essayIn" aria-label="解答欄" placeholder="ここに答えを書く" ${S.answered?'readonly':''}>${esc(c.text||'')}</textarea>`;
   if(!S.answered){
     h+=`<div class="actions"><button class="btn primary" data-act="judge">答え合わせ</button></div>`;
@@ -1657,9 +1661,11 @@ function renderEssay(c){
     const t=norm(c.text||'');
     const res=q.kw.map(k=>({w:k[0],hit:k.some(a=>t.includes(norm(a)))}));
     const hits=res.filter(r=>r.hit).length;
+    const useRes=S.hint?(q.use||[]).map(w=>({w,hit:t.includes(norm(w))})):[];
     h+=`<div class="result neutral">
       <div class="verdict" style="font-size:18px">キーワード ${hits} / ${res.length}</div>
-      <div class="kw-list">${res.map(r=>`<span class="kw ${r.hit?'hit':'miss'}">${r.hit?'○':'×'} ${esc(r.w)}</span>`).join('')}</div>
+      <div class="kw-list"><span style="font-size:12px;color:var(--muted)">採点キーワード</span>${res.map(r=>`<span class="kw ${r.hit?'hit':'miss'}">${r.hit?'○':'×'} ${esc(r.w)}</span>`).join('')}</div>
+      ${useRes.length?`<div class="kw-list"><span style="font-size:12px;color:var(--muted)">指定語句を使ったか</span>${useRes.map(r=>`<span class="kw ${r.hit?'hit':'miss'}">${r.hit?'○':'×'} ${esc(r.w)}</span>`).join('')}</div>`:''}
       <div class="model"><div class="h">解答例</div>${esc(q.a)}</div>
       <div class="self">自己採点：${['○','△','×'].map(s=>`<button data-self="${s}" aria-pressed="${c.self===s}">${s}</button>`).join('')}<span>（○だけ正解として数えます）</span></div>
     </div><div class="actions"><button class="btn next" data-act="next" ${c.self?'':'disabled'}>次の問題</button></div>`;
@@ -1688,7 +1694,7 @@ function renderList(){
     if(!list.length){q.innerHTML=h+'<div class="empty">条件に合う記述問題がありません。</div>'+backupHTML();return;}
     h+='<div class="nenpyo">'+list.map(e=>S.editing===e.sid?`<div class="nen ed-row"><span class="y">${e.y}<small>年ごろ</small></span>${editorHTML(e.sid)}</div>`:
       `<div class="nen es-row${e.deleted?' gone':''}"><span class="y">${e.y}<small>年ごろ</small></span><span class="t"><span class="top"><span class="era" style="--c:var(${ERA_COLOR[e.era]})">${e.era}</span>${badge(e)}</span>
-        <span><b>${hl(esc(e.q))}</b></span><span class="es-a">${hl(esc(e.a))}</span><span class="ths">${e.kw.map(k=>`<span class="th">${esc(k.join('／'))}</span>`).join('')}</span></span>
+        <span><b>${hl(esc(e.q))}</b></span><span class="es-a">${hl(esc(e.a))}</span><span class="ths"><span class="th use">指定語句：${esc((e.use||[]).join('・')||'なし')}</span></span><span class="ths">採点：${e.kw.map(k=>`<span class="th">${esc(k.join('／'))}</span>`).join('')}</span></span>
         <span class="rowbtns">${edBtn(e)}</span></div>`).join('')+'</div>';
     q.innerHTML=h+backupHTML(); focusEditor(); return;
   }
@@ -1803,6 +1809,7 @@ function addEssay(){
   S.sheet.essays.push(rand(c));
 }
 const tools=(kind,i,label)=>`<span class="qtools"><button class="tbtn" data-q="re-${kind}" data-qi="${i}">${label||'この問題を変える'}</button><button class="tbtn del" data-q="rm-${kind}" data-qi="${i}" aria-label="削除">消す</button></span>`;
+function useOn(sh,i){ const k=sh.essays[i]&&sh.essays[i].id; const o=(sh.noUse||{})[k]; return o===undefined?S.hint:o; }
 function renderPrint(){
   const pr=S.pr, sh=S.sheet;
   const opt=(id,vals,cur,unit)=>`<select class="sel" id="${id}">${vals.map(v=>`<option value="${v}" ${v===cur?'selected':''}>${v}${unit}</option>`).join('')}</select>`;
@@ -1813,7 +1820,7 @@ function renderPrint(){
     <div class="pset-row"><label>年表の穴埋め</label>${opt('prFill',[0,4,6,8,10,12,15],pr.fill,'か所')}
       <button class="chip" data-prbank aria-pressed="${pr.bank}">語群をつける</button></div>
     <div class="pset-row"><label>入試形式</label>${opt('prExam',[0,1,2,3,4,5,6,8],pr.exam,'問')}<span class="hint-line">年表の時期・正誤・語句の組み合わせ・時期のできごと・同じころの世界・時代</span></div>
-    <div class="pset-row"><label>記述</label>${opt('prEssay',[0,1,2,3,4],pr.essay,'問')}</div>
+    <div class="pset-row"><label>記述</label>${opt('prEssay',[0,1,2,3,4],pr.essay,'問')}<span class="hint-line">指定語句：</span><button class="chip" data-prhint="1" aria-pressed="${S.hint}">つける</button><button class="chip" data-prhint="0" aria-pressed="${!S.hint}">つけない</button></div>
     <div class="pset-row"><label>解答</label><button class="chip" data-prans aria-pressed="${pr.answers}">解答ページをつける</button></div>
     ${S.custom.length?`<div class="pset-row"><label>選んだ問題</label><span class="cust">${S.custom.map((ids,i)=>`<span class="kw">${ids.length}件の並び替え <button class="x" data-rmcustom="${i}" aria-label="削除">×</button></span>`).join('')}</span></div>`:''}
     <div class="actions"><button class="btn" data-act="tolist2">一覧から問題を選ぶ</button><button class="btn" data-act="rebuild">問題を作り直す</button><button class="btn primary" data-act="print">印刷する</button></div>
@@ -1859,7 +1866,7 @@ function sheetHTML(sh){
   }
   if(sh.essays.length){
     dai++;
-    q+=`<section class="dai"><h4><span class="dn">${dai}</span>次の問いに答えなさい。</h4>`+sh.essays.map((e,i)=>`<div class="sess">${tools('essay',i)}<p>(${i+1}) ${esc(e.q)}${S.hint?`<span class="skw">［${e.kw.map(k=>esc(k[0])).join('・')}］の語句を使うこと。</span>`:''}</p><div class="lines"></div></div>`).join('')+`<div class="addrow"><button class="tbtn" data-q="add-essay">＋ 記述を1問追加</button></div></section>`;
+    q+=`<section class="dai"><h4><span class="dn">${dai}</span>次の問いに答えなさい。</h4>`+sh.essays.map((e,i)=>`<div class="sess">${tools('essay',i)}${e.use&&e.use.length?`<span class="qtools"><button class="tbtn" data-q="tg-use" data-qi="${i}">${useOn(sh,i)?'語句を消す':'語句をつける'}</button></span>`:''}<p>(${i+1}) ${esc(e.q)}${useOn(sh,i)&&e.use&&e.use.length?`<span class="skw">${e.use.map(k=>'「'+esc(k)+'」').join('')}という語句を使うこと。</span>`:''}</p><div class="lines"></div></div>`).join('')+`<div class="addrow"><button class="tbtn" data-q="add-essay">＋ 記述を1問追加</button></div></section>`;
     a+=`<section class="dai"><h4><span class="dn">${dai}</span>記述（解答例）</h4><ol class="alist">${sh.essays.map((e,i)=>`<li>(${i+1}) ${esc(e.a)}<span class="ay">採点のポイント：${e.kw.map(k=>esc(k[0])).join('・')}</span></li>`).join('')}</ol></section>`;
   }
   if(!dai) return '<div class="empty">問題がありません。<div class="addrow"><button class="tbtn" data-q="add-order">＋ 並び替えを追加</button><button class="tbtn" data-q="add-fill">＋ 年表の穴埋めを追加</button><button class="tbtn" data-q="add-essay">＋ 記述を追加</button></div></div>';
@@ -1902,6 +1909,7 @@ document.addEventListener('click',ev=>{
       case 're-essay': reEssay(i); break;
       case 'rm-essay': sh.essays.splice(i,1); break;
       case 'add-essay': addEssay(); break;
+      case 'tg-use': { sh.noUse=sh.noUse||{}; const k=sh.essays[i].id; sh.noUse[k]=!useOn(sh,i); break; }
       case 're-exam': { const q=makeExam('rand',S.theme); if(q) sh.exams[i]=q; break; }
       case 'rm-exam': sh.exams.splice(i,1); break;
       case 'add-exam': { const q=makeExam('rand',S.theme); if(q){ sh.exams=sh.exams||[]; sh.exams.push(q);} else sh.note=['この条件では入試形式の問題を作れませんでした。']; break; }
@@ -1911,7 +1919,8 @@ document.addEventListener('click',ev=>{
   if(b.dataset.omode){S.omode=b.dataset.omode;renderControls();if(S.mode==='print'){buildSheet();renderPrint();}else newQuestion();return;}
   if(b.dataset.n){S.n=b.dataset.n==='r'?'r':+b.dataset.n;renderControls();newQuestion();return;}
   if(b.dataset.choice){S.choice=b.dataset.choice==='1';renderControls();if(S.answered)newQuestion();else render();return;}
-  if(b.hasAttribute('data-hint')){S.hint=!S.hint;renderControls();if(c) c.text=($('#essayIn')||{}).value??c.text;render();return;}
+  if(b.dataset.hintset){S.hint=b.dataset.hintset==='1';renderControls();if(c) c.text=($('#essayIn')||{}).value??c.text;render();return;}
+  if(b.dataset.prhint){S.hint=b.dataset.prhint==='1'; if(S.sheet) S.sheet.noUse={}; renderPrint();return;}
   if(b.hasAttribute('data-prbank')){S.pr.bank=!S.pr.bank;renderPrint();return;}
   if(b.hasAttribute('data-prans')){S.pr.answers=!S.pr.answers;renderPrint();return;}
   if(b.dataset.rmcustom!==undefined){S.custom.splice(+b.dataset.rmcustom,1);buildSheet();renderPrint();return;}
