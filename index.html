@@ -155,10 +155,15 @@ header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;
 .cand-ans{font-size:11.5px;color:var(--muted)}
 .rkb{display:inline-block;font-size:10.5px;font-weight:900;border-radius:3px;padding:0 5px;margin-left:4px;line-height:1.6;border:1px solid currentColor}
 .rkb.rkA{color:var(--shu)}.rkb.rkB{color:var(--ai)}.rkb.rkC{color:var(--muted)}
-.chip.rk[aria-pressed="true"].rkA{border-color:var(--shu);background:var(--shu-soft)}
+.chip.rk[aria-pressed="true"].rkcA{border-color:var(--shu);background:var(--shu-soft)}
 .imp{font-size:11px;font-weight:700;border-radius:3px;padding:0 7px;line-height:1.8;border:1px solid currentColor;white-space:nowrap}
 .imp.impA{color:var(--shu)}.imp.impB{color:var(--ai)}.imp.impC{color:var(--muted)}
 .canon-l{display:inline-block;font-size:11px;font-weight:700;color:var(--shu);border:1px solid var(--shu);border-radius:3px;padding:0 5px;margin-right:6px;line-height:1.6}
+.rkctl{display:inline-flex;align-items:center;gap:1px;margin-left:4px}
+.rkctl .rkb{margin-left:0}
+.rkbtn{font:inherit;font-size:9px;line-height:1;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:3px;padding:2px 3px;cursor:pointer}
+.rkbtn:hover:not(:disabled){border-color:var(--ai);color:var(--ai)}
+.rkbtn:disabled{opacity:.3;cursor:default}
 .banbtn{display:inline-block;margin-left:8px;font:inherit;font-size:11px;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:4px;padding:0 6px;cursor:pointer;vertical-align:1px}
 .banbtn:hover{border-color:var(--ng);color:var(--ng)}
 .obv{display:inline-block;margin-left:6px;font-size:11px;color:var(--ng)}
@@ -840,7 +845,7 @@ function editorHTML(sid){
   if(kind==='ev'){
     h+=`<label for="edText">文（答えが入る場所を〔〕で示す）</label><textarea id="edText" rows="3">${esc(it.text)}</textarea>
         <label for="edKey">答え（別の書き方も正解にするときは ／ で区切る）</label><input id="edKey" class="search" value="${esc(it.alts.join('／'))}">
-        <label>重要度（A：重要　B：標準　C：発展）</label><div class="row">${['A','B','C'].map(k=>`<button class="chip rk rk${k}" data-edrank="${k}" aria-pressed="${(S.edRank||it.rank)===k}">${k}</button>`).join('')}${it.rank!==it.rank0?`<span class="hint-line">（最初は${it.rank0}）</span>`:''}</div>`;
+        <label>重要度（A：重要　B：標準　C：発展）</label><div class="row">${['A','B','C'].map(k=>`<button class="chip rk rkc${k}" data-edrank="${k}" aria-pressed="${(S.edRank||it.rank)===k}">${k}</button>`).join('')}${it.rank!==it.rank0?`<span class="hint-line">（最初は${it.rank0}）</span>`:''}</div>`;
   }else{
     h+=`<label for="edQ">問題文</label><textarea id="edQ" rows="2">${esc(it.q)}</textarea>
         <label for="edA">解答例</label><textarea id="edA" rows="3">${esc(it.a)}</textarea>
@@ -865,7 +870,7 @@ function backupHTML(){
   return `<details class="backup"><summary>編集データの保存先・バックアップ</summary>
     <p class="hint-line">保存先：${Store.mode==='db'?'このサイト（このページを開けるほかの人にも反映されます）':'このブラウザ（ほかの端末やブラウザには反映されません）'}。変更 ${st.ed}件・削除 ${st.del}件。</p>
     <p class="hint-line">下の文字をコピーして保存しておくと、別のブラウザや自分のサイトに移したときに「取り込む」で同じ状態にもどせます。</p>
-    <textarea id="bkOut" readonly rows="4">${esc(JSON.stringify(Object.assign({},EDITS,BAN.size?{__ban:[...BAN]}:{})))}</textarea>
+    <textarea id="bkOut" readonly rows="4">${esc(JSON.stringify(Object.assign({},EDITS,BAN.size?{__ban:[...BAN]}:{},(CANON_U.add.size||CANON_U.del.size)?{__canon:{add:[...CANON_U.add],del:[...CANON_U.del]}}:{})))}</textarea>
     <div class="actions"><button class="btn" data-act="bkcopy">コピー</button></div>
     ${Store.canEdit?`<textarea id="bkIn" rows="3" placeholder="ここにバックアップを貼り付け"></textarea><div class="actions"><button class="btn" data-act="bkimport">取り込む</button></div>`:''}
   </details>`;
@@ -1142,7 +1147,12 @@ shukyo:'仏教・儒教・キリスト教・イスラム教が生まれ、ヨー
 const SEQS=[["飛鳥〜奈良の国づくり", ["593:聖徳太子", "603:冠位十二階", "604:十七条の憲法", "607:小野妹子", "645:大化の改新", "663:白村江の戦い", "672:壬申の乱", "701:大宝律令", "710:平城京", "743:墾田永年私財法", "752:大仏", "794:平安京"]], ["平安の政治と武士の台頭", ["794:平安京", "894:菅原道真", "1016:藤原道長", "1086:白河天皇", "1156:保元の乱", "1159:平治の乱", "1167:平清盛", "1185:地頭"]], ["鎌倉幕府の成立とおとろえ", ["1185:地頭", "1192:征夷大将軍", "1221:承久の乱", "1232:御成敗式目", "1274:文永の役", "1281:弘安の役", "1297:徳政令", "1333:後醍醐天皇"]], ["南北朝から室町幕府", ["1333:後醍醐天皇", "1334:建武の新政", "1338:足利尊氏", "1392:南北朝", "1404:勘合貿易", "1428:正長の土一揆", "1467:応仁の乱", "1485:山城国一揆", "1488:加賀の一向一揆"]], ["天下統一", ["1543:鉄砲", "1549:フランシスコ・ザビエル", "1560:桶狭間の戦い", "1573:室町幕府", "1575:長篠の戦い", "1577:楽市・楽座", "1582:本能寺の変", "1587:バテレン追放令", "1588:刀狩令", "1590:全国統一", "1592:文禄の役", "1600:関ヶ原の戦い"]], ["江戸幕府の支配と鎖国", ["1600:関ヶ原の戦い", "1603:徳川家康", "1615:武家諸法度", "1635:参勤交代", "1637:島原・天草一揆", "1639:ポルトガル", "1641:出島"]], ["江戸の三大改革", ["1685:徳川綱吉", "1716:徳川吉宗", "1742:公事方御定書", "1772:田沼意次", "1787:松平定信", "1825:異国船打払令", "1837:大塩平八郎", "1841:水野忠邦"]], ["開国から倒幕", ["1792:ラクスマン", "1825:異国船打払令", "1853:ペリー", "1854:日米和親条約", "1858:日米修好通商条約", "1858:安政の大獄", "1860:桜田門外の変", "1866:薩長同盟", "1867:大政奉還", "1868:戊辰戦争"]], ["明治維新", ["1867:大政奉還", "1868:五箇条の御誓文", "1869:版籍奉還", "1871:廃藩置県", "1873:徴兵令", "1873:地租改正", "1877:西南戦争"]], ["自由民権運動と立憲政治", ["1874:民撰議院設立の建白書", "1877:西南戦争", "1881:国会開設の勅諭", "1885:内閣制度", "1889:大日本帝国憲法", "1890:帝国議会"]], ["条約改正と日清・日露戦争", ["1871:岩倉具視", "1886:領事裁判権", "1894:領事裁判権", "1894:日清戦争", "1895:下関条約", "1902:日英同盟", "1904:日露戦争", "1905:ポーツマス条約", "1910:韓国併合", "1911:関税自主権"]], ["第一次世界大戦と大正デモクラシー", ["1914:第一次世界大戦", "1915:二十一か条の要求", "1917:ロシア革命", "1918:シベリア出兵", "1918:米騒動", "1918:原敬", "1919:ベルサイユ条約", "1920:国際連盟", "1923:関東大震災", "1925:普通選挙法"]], ["戦争への道", ["1929:世界恐慌", "1931:満州事変", "1932:五・一五事件", "1933:国際連盟", "1936:二・二六事件", "1937:日中戦争", "1938:国家総動員法", "1939:第二次世界大戦", "1941:太平洋戦争", "1945:ポツダム宣言"]], ["戦後改革と独立", ["1945:ポツダム宣言", "1945:GHQ", "1946:日本国憲法", "1946:農地改革", "1950:朝鮮戦争", "1951:サンフランシスコ平和条約", "1956:日ソ共同宣言"]], ["戦後の外交と経済", ["1951:サンフランシスコ平和条約", "1956:日ソ共同宣言", "1964:オリンピック", "1965:日韓基本条約", "1972:沖縄", "1972:日中共同声明", "1973:石油危機", "1978:日中平和友好条約", "1989:冷戦"]], ["欧米の近代化", ["1492:コロンブス", "1517:ルター", "1642:ピューリタン革命", "1688:名誉革命", "1776:独立宣言", "1789:人権宣言", "1840:アヘン戦争"]], ["仏教の移り変わり", ["538:仏教", "607:法隆寺", "752:大仏", "805:最澄", "1053:平等院鳳凰堂", "1175:法然", "1224:親鸞"]], ["文化の移り変わり", ["607:法隆寺", "752:大仏", "905:古今和歌集", "1008:紫式部", "1053:平等院鳳凰堂", "1203:金剛力士像", "1397:金閣", "1489:銀閣", "1689:松尾芭蕉", "1774:解体新書", "1831:葛飾北斎"]]];
 const SEQ_OF={};
 function buildSeqs(){ SEQS.forEach(([name,list],si)=>list.forEach((k,pi)=>{ const [y,key]=[+k.slice(0,k.indexOf(':')),k.slice(k.indexOf(':')+1)]; const e=E.find((x,i)=>x.y===y&&ORIG_E[i].alts[0]===key); if(e) (SEQ_OF[e.sid]=SEQ_OF[e.sid]||[]).push(si); else console.warn('seq not found',k); })); }
-function canonPair(a,b){ const A=SEQ_OF[a.sid]||[], B=SEQ_OF[b.sid]||[]; const si=A.find(x=>B.includes(x)); return si===undefined?null:SEQS[si][0]; }
+let CANON_U={add:new Set(),del:new Set()};
+try{ const c=JSON.parse(localStorage.getItem('rk-canon')||'null'); if(c) CANON_U={add:new Set(c.add||[]),del:new Set(c.del||[])}; }catch(e){}
+function saveCanon(){ try{ localStorage.setItem('rk-canon',JSON.stringify({add:[...CANON_U.add],del:[...CANON_U.del]})); }catch(e){} }
+function canonPair(a,b){ if(!a||!b) return null; const k=[a.sid,b.sid].sort().join('~');
+  if(CANON_U.del.has(k)) return null; if(CANON_U.add.has(k)) return '自分で登録した定番';
+  const A=SEQ_OF[a.sid]||[], B=SEQ_OF[b.sid]||[]; const si=A.find(x=>B.includes(x)); return si===undefined?null:SEQS[si][0]; }
 // 並び替え1問の「順番の重要度」：隣どうしが定番の流れ・因果関係・重要語句でつながっているか
 function orderImportance(items){
   const s=items.slice().sort((a,b)=>a.y-b.y); let canon=0, rel=0;
@@ -1203,6 +1213,8 @@ const yStr=y=>y<0?`紀元前${-y}`:String(y);
 const yv=e=>e.lab?e.lab[0]:yStr(e.y), yu=e=>e.lab?e.lab[1]:'年';
 const perLabel=p=>p==='昭和前'?'昭和':p;
 const rankTag=e=>`<span class="rkb rk${e.rank}" title="重要度">${e.rank}</span>`;
+const rankCtl=e=>`<span class="rkctl"><button class="rkbtn" data-rkup="${e.sid}" ${e.rank==='A'?'disabled':''} aria-label="重要度を上げる">▲</button>${rankTag(e)}<button class="rkbtn" data-rkdn="${e.sid}" ${e.rank==='C'?'disabled':''} aria-label="重要度を下げる">▼</button></span>`;
+async function setRank(sid,r){ const it=itemOf(sid); const o=baseRec(sid); o.rank=r===it.rank0?null:r; o.updatedAt=Date.now(); await Store.put(sid,o); }
 const eraTag=e=>`<span class="era" style="--c:var(${e.world?'--e-world':ERA_COLOR[e.era]})">${e.world?'世界':esc(perLabel(e.per))}</span>`;
 const filled=e=>esc(e.text).replace('〔〕',`<b>${esc(e.key)}</b>`);
 const plain=e=>esc(e.text).replace('〔〕',esc(e.key));
@@ -1697,7 +1709,7 @@ function renderControls(){
   document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===S.mode));
   $('#eraRow').innerHTML='<div class="row"><span class="lab">時代</span>'+ERAS.map(([n,c])=>`<button class="chip" data-era="${n}" style="--c:var(${c})" aria-pressed="${S.eras.has(n)}"><span class="dot"></span>${n}</button>`).join('')
     +(S.mode!=='essay'?`<button class="chip" data-world style="--c:var(--e-world)" aria-pressed="${S.world}"><span class="dot"></span>世界のできごと</button>`:'')
-    +(S.mode!=='essay'?`</div><div class="row" id="rankRow"><span class="lab">重要度</span>${[['A','A 重要'],['B','B 標準'],['C','C 発展']].map(([k,l])=>`<button class="chip rk rk${k}" data-rank="${k}" aria-pressed="${S.ranks.includes(k)}">${l}</button>`).join('')}<button class="chip" data-rw aria-pressed="${S.rankWeight}">重要なものを多めに出す</button>`:'')+'</div>';
+    +(S.mode!=='essay'?`</div><div class="row" id="rankRow"><span class="lab">重要度</span>${[['A','A 重要'],['B','B 標準'],['C','C 発展']].map(([k,l])=>`<button class="chip rk rkc${k}" data-rank="${k}" aria-pressed="${S.ranks.includes(k)}">${l}</button>`).join('')}<button class="chip" data-rw aria-pressed="${S.rankWeight}">重要なものを多めに出す</button>`:'')+'</div>';
   const cnt=k=>E.filter(e=>e.tags.includes(k)).length;
   const ecnt=k=>ESSAY.filter(e=>e.tags.includes(k)).length;
   let h='';
@@ -1743,7 +1755,7 @@ function newQuestion(){
 function render(){
   const q=$('#q'); const c=S.cur;
   if(!c){q.innerHTML=`<div class="empty">${S.mode==='order'&&S.omode==='strict'?'「解説で全部つながる問題だけ」では、この時代とテーマの組み合わせの問題が作れません。テーマを「おまかせ」にするか、出し方を変えてください。':'この時代とテーマの組み合わせでは問題が作れません。時代を増やすか、テーマを変えてください。'}</div>`;return;}
-  if(c.type==='order'){ if(!c.imp) c.imp=orderImportance(c.items); q.innerHTML=`<div class="qhead"><span class="qno">第${S.qno}問</span><span class="tag">${esc(c.theme)}</span><span class="imp imp${c.imp.level}">順番：${IMP_LABEL[c.imp.level]}</span></div>`+renderOrder(c); }
+  if(c.type==='order'){ c.imp=orderImportance(c.items); q.innerHTML=`<div class="qhead"><span class="qno">第${S.qno}問</span><span class="tag">${esc(c.theme)}</span><span class="imp imp${c.imp.level}">順番：${IMP_LABEL[c.imp.level]}</span></div>`+renderOrder(c); }
   if(c.type==='fill') q.innerHTML=`<div class="qhead"><span class="qno">第${S.qno}問</span><span class="tag">${esc(c.theme)}</span></div>`+renderFill(c);
   if(c.type==='exam') q.innerHTML=`<div class="qhead"><span class="qno">第${S.qno}問</span><span class="tag">${esc(c.theme)}</span></div>`+renderExam(c);
   if(c.type==='essay') q.innerHTML=`<div class="qhead"><span class="qno">第${S.qno}問</span><span class="era" style="--c:var(${ERA_COLOR[c.q.era]})">${c.q.era}</span></div>`+renderEssay(c);
@@ -1784,9 +1796,9 @@ function flowHTML(evs,labels,tk){
   let h='<div class="flow">';
   if(tk&&FLOW[tk]) h+=`<p class="flow-sum"><span class="fs-l">流れ</span>${esc(FLOW[tk])}</p>`;
   evs.forEach((e,k)=>{
-    h+=`<div class="fl-item"><span class="kana">${labels[k]}</span><span class="y">${yv(e)}${yu(e)}</span><span>${eraTag(e)}${rankTag(e)} ${filled(e)}</span></div>`;
+    h+=`<div class="fl-item"><span class="kana">${labels[k]}</span><span class="y">${yv(e)}${yu(e)}</span><span>${eraTag(e)}${rankCtl(e)} ${filled(e)}</span></div>`;
     if(k<steps.length){ const s=steps[k]; const nx=evs[k+1]; const bk=pairKey(e,nx); const ob=obviousPair(e,nx);
-      h+=`<div class="fl-step ${s.kind}"><span class="ar" aria-hidden="true"></span><span>${s.kind==='cause'?'<span class="why-l">つながり</span>':''}${canonPair(e,nx)?`<span class="canon-l">定番：${esc(canonPair(e,nx))}</span>`:''}${esc(s.t)}${ob&&!BAN.has(bk)?`<span class="obv">あからさま：${esc(ob)}</span>`:''}<button class="banbtn" data-ban="${e.sid}~${nx.sid}">${BAN.has(bk)?'一緒に出さない（登録ずみ・取り消す）':'この2つを一緒に出さない'}</button></span></div>`; }
+      h+=`<div class="fl-step ${s.kind}"><span class="ar" aria-hidden="true"></span><span>${s.kind==='cause'?'<span class="why-l">つながり</span>':''}${canonPair(e,nx)?`<span class="canon-l">定番：${esc(canonPair(e,nx))}</span>`:''}${esc(s.t)}${ob&&!BAN.has(bk)?`<span class="obv">あからさま：${esc(ob)}</span>`:''}<button class="banbtn" data-canon="${e.sid}~${nx.sid}">${canonPair(e,nx)?'この順番を定番から外す':'この順番を定番に入れる'}</button><button class="banbtn" data-ban="${e.sid}~${nx.sid}">${BAN.has(bk)?'一緒に出さない（登録ずみ・取り消す）':'この2つを一緒に出さない'}</button></span></div>`; }
   });
   return h+'</div>';
 }
@@ -1887,7 +1899,7 @@ function renderList(){
     }
     if(S.editing===e.sid){ body+=`<div class="nen ed-row"><span class="y">${yv(e)}<small>${yu(e)}</small></span>${editorHTML(e.sid)}</div>`; continue; }
     const on=S.sel.has(e.id);
-    body+=`<div class="nen pick${on?' on':''}${e.deleted?' gone':''}"><span class="y">${yv(e)}<small>${yu(e)}</small></span><span class="t"><span class="top">${eraTag(e)}${rankTag(e)}${badge(e)}</span><span>${hl(filled(e))}${e.alts.length>1?`<span class="alts">（別解：${esc(e.alts.slice(1).join('／'))}）</span>`:''}</span><span class="ths">${
+    body+=`<div class="nen pick${on?' on':''}${e.deleted?' gone':''}"><span class="y">${yv(e)}<small>${yu(e)}</small></span><span class="t"><span class="top">${eraTag(e)}${rankCtl(e)}${badge(e)}</span><span>${hl(filled(e))}${e.alts.length>1?`<span class="alts">（別解：${esc(e.alts.slice(1).join('／'))}）</span>`:''}</span><span class="ths">${
       e.tags.map(t=>`<button class="th" data-theme-pick="${t}" aria-pressed="${S.listTheme===t}">${esc(THEMES[t])}</button>`).join('')}</span></span>
       <span class="rowbtns">${e.deleted?'':`<button class="selbtn" data-sel="${e.id}" aria-pressed="${on}" aria-label="${on?'選択を外す':'選ぶ'}">${on?'✓':'＋'}</button>`}${edBtn(e)}</span></div>`;
   }
@@ -2145,6 +2157,10 @@ document.addEventListener('click',ev=>{
   if(b.dataset.themePick){S.listTheme=S.listTheme===b.dataset.themePick?'all':b.dataset.themePick;renderControls();renderList();$('.list-head').scrollIntoView({block:'start',behavior:'smooth'});return;}
   if(b.dataset.sel!==undefined){const id=+b.dataset.sel; S.sel.has(id)?S.sel.delete(id):S.sel.add(id);
     const row=b.closest('.nen'); const on=S.sel.has(id); row.classList.toggle('on',on); b.setAttribute('aria-pressed',on); b.textContent=on?'✓':'＋'; renderSelBar(); return;}
+  if(b.dataset.rkup||b.dataset.rkdn){ const sid=b.dataset.rkup||b.dataset.rkdn; const it=itemOf(sid); const ord=['A','B','C']; const i=ord.indexOf(it.rank)+(b.dataset.rkup?-1:1); if(i<0||i>2) return;
+    const y=window.scrollY; setRank(sid,ord[i]).then(()=>{ if(S.mode==='list') renderList(); else if(S.mode==='print') renderPrint(); else render(); window.scrollTo({top:y}); }); return; }
+  if(b.dataset.canon){ const k=b.dataset.canon.split('~').sort().join('~'); const cur=!!canonPair(...b.dataset.canon.split('~').map(bySid));
+    if(cur){ CANON_U.add.delete(k); CANON_U.del.add(k); } else { CANON_U.del.delete(k); CANON_U.add.add(k); } saveCanon(); render(); return; }
   if(b.dataset.rank){ const k=b.dataset.rank; if(S.ranks.includes(k)){ if(S.ranks.length>1) S.ranks=S.ranks.filter(x=>x!==k); } else S.ranks=[...S.ranks,k].sort(); renderControls(); newQuestion(); return; }
   if(b.hasAttribute('data-rw')){ S.rankWeight=!S.rankWeight; renderControls(); newQuestion(); return; }
   if(b.hasAttribute('data-world')){S.world=!S.world;renderControls();newQuestion();return;}
@@ -2226,7 +2242,7 @@ document.addEventListener('click',ev=>{
       setDeleted(sid,true).then(()=>{ S.flash='消しました。「消したもの」からいつでも復活できます。'; renderList(); renderSelBar(); }); break; }
     case 'bkcopy': { const t=$('#bkOut'); const done=()=>{b.textContent='コピーしました';}; try{ navigator.clipboard.writeText(t.value).then(done,()=>{t.select();}); }catch(e){ t.select(); } break; }
     case 'bkimport': { let m; try{ m=JSON.parse($('#bkIn').value); }catch(e){ S.flash='貼り付けた文字を読み取れませんでした。コピーした内容をそのまま貼り付けてください。'; renderList(); break; }
-      b.disabled=true; if(Array.isArray(m.__ban)){ m.__ban.forEach(x=>BAN.add(x)); saveBan(); } (async()=>{ let n=0; for(const k in m){ if(ITEM[k]&&m[k]&&typeof m[k]==='object'){ await Store.put(k,m[k]); n++; } } S.flash=`${n}件の編集データを取り込みました。`; renderList(); })(); break; }
+      b.disabled=true; if(Array.isArray(m.__ban)){ m.__ban.forEach(x=>BAN.add(x)); saveBan(); } if(m.__canon){ (m.__canon.add||[]).forEach(x=>CANON_U.add.add(x)); (m.__canon.del||[]).forEach(x=>CANON_U.del.add(x)); saveCanon(); } (async()=>{ let n=0; for(const k in m){ if(ITEM[k]&&m[k]&&typeof m[k]==='object'){ await Store.put(k,m[k]); n++; } } S.flash=`${n}件の編集データを取り込みました。`; renderList(); })(); break; }
     case 'print': try{ window.print(); }catch(e){} break;
   }
 });
