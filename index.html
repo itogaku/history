@@ -139,6 +139,29 @@ header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;
 .fl-step.cause{color:var(--ink)}
 .fl-step.cause .ar{background:var(--shu)}
 .fl-step.cause .ar::after{border-top-color:var(--shu)}
+.cand-open{padding-top:12px}
+.cands-wrap{display:flex;flex-direction:column;gap:10px;padding:14px 0;border-bottom:1.5px dashed var(--line)}
+.cands-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.cands-head h3{margin:0;font-family:var(--mincho);font-weight:900;font-size:19px}
+.cands{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}
+.cand{text-align:left;display:flex;flex-direction:column;gap:6px;border:1.5px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.55}
+.cand:hover{border-color:var(--ai)}
+.cand.on{border-color:var(--ai);background:var(--ai-soft)}
+.cand-top{display:flex;gap:6px;align-items:center}
+.cand-no{font-family:var(--mincho);font-weight:900;font-size:16px;min-width:1.6em}
+.cand-ck{margin-left:auto;font-size:12px;font-weight:700;color:var(--ai);white-space:nowrap}
+.cand-items{display:flex;flex-direction:column;gap:2px}
+.cand-items b{font-family:var(--mincho);margin-right:6px;color:var(--ai)}
+.cand-ans{font-size:11.5px;color:var(--muted)}
+.rkb{display:inline-block;font-size:10.5px;font-weight:900;border-radius:3px;padding:0 5px;margin-left:4px;line-height:1.6;border:1px solid currentColor}
+.rkb.rkA{color:var(--shu)}.rkb.rkB{color:var(--ai)}.rkb.rkC{color:var(--muted)}
+.chip.rk[aria-pressed="true"].rkA{border-color:var(--shu);background:var(--shu-soft)}
+.imp{font-size:11px;font-weight:700;border-radius:3px;padding:0 7px;line-height:1.8;border:1px solid currentColor;white-space:nowrap}
+.imp.impA{color:var(--shu)}.imp.impB{color:var(--ai)}.imp.impC{color:var(--muted)}
+.canon-l{display:inline-block;font-size:11px;font-weight:700;color:var(--shu);border:1px solid var(--shu);border-radius:3px;padding:0 5px;margin-right:6px;line-height:1.6}
+.banbtn{display:inline-block;margin-left:8px;font:inherit;font-size:11px;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:4px;padding:0 6px;cursor:pointer;vertical-align:1px}
+.banbtn:hover{border-color:var(--ng);color:var(--ng)}
+.obv{display:inline-block;margin-left:6px;font-size:11px;color:var(--ng)}
 .why{display:block;font-size:8.5pt;color:#222;margin-top:1px}
 .answer-list{display:flex;flex-direction:column;gap:4px;margin:0;padding:0;list-style:none}
 .answer-list li{display:grid;grid-template-columns:2em 5.6em 1fr;gap:8px;align-items:baseline;font-size:14px}
@@ -182,6 +205,14 @@ mark{background:var(--shu-soft);color:inherit;padding:0 1px}
 .badge{font-size:11px;font-weight:700;color:var(--shu);border:1px solid var(--shu);border-radius:3px;padding:0 6px;margin-left:6px;line-height:1.6}
 .badge.del{color:var(--muted);border-color:var(--muted)}
 .nen.gone .t{opacity:.55;text-decoration:line-through;text-decoration-color:var(--muted)}
+.lk-list{display:flex;flex-direction:column;border-top:1.5px solid var(--ink)}
+.lk-row{padding:10px 4px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.lk-pair{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px}
+.lk-ev{display:inline-flex;gap:6px;align-items:baseline}
+.lk-ev.gone{opacity:.5;text-decoration:line-through}
+.lk-y{font-family:var(--mincho);font-weight:700;font-variant-numeric:tabular-nums}
+.lk-ar{color:var(--shu);font-weight:900}
+.lk-t{font-size:13px;color:var(--muted);line-height:1.6}
 .th.use{border-color:var(--ai);color:var(--ai)}
 .alts{font-size:12px;color:var(--muted);margin-left:4px}
 .es-a{font-size:13px;color:var(--muted)}
@@ -355,7 +386,7 @@ b.neg{text-decoration:underline;text-underline-offset:3px}
       <button id="tab-list" data-mode="list" aria-pressed="false">年表一覧<small>選んで出題</small></button>
       <button id="tab-print" data-mode="print" aria-pressed="false">プリント<small>A4で印刷</small></button>
     </div>
-    <div class="row" id="eraRow"><span class="lab">時代</span></div>
+    <div class="optrows" id="eraRow"></div>
     <div class="optrows" id="optRow"></div>
   </section>
 
@@ -384,28 +415,25 @@ const THEMES = {
   kbud:'鎌倉時代の新しい仏教', shukyo:'世界の宗教'
 };
 // [年, 時代, 文(〔〕が空欄), 語句(|で別解), 種類 p=人物 t=用語, テーマ, 世界史=1]
+// 重要度 A：教科書の太字・入試で頻出　B：標準　C：発展（資料集・難関校レベル）
+const RANK0={"57:金印": "A", "239:卑弥呼": "A", "538:仏教": "A", "593:聖徳太子": "A", "603:冠位十二階": "A", "604:十七条の憲法": "A", "607:小野妹子": "A", "645:大化の改新": "A", "663:白村江の戦い": "A", "672:壬申の乱": "A", "701:大宝律令": "A", "710:平城京": "A", "743:墾田永年私財法": "A", "752:大仏": "A", "754:鑑真": "A", "794:平安京": "A", "805:最澄": "A", "806:空海": "A", "894:菅原道真": "A", "1016:藤原道長": "A", "1053:平等院鳳凰堂": "A", "1086:白河天皇": "A", "1156:保元の乱": "A", "1159:平治の乱": "A", "1167:平清盛": "A", "1185:地頭": "A", "1192:征夷大将軍": "A", "1221:承久の乱": "A", "1232:御成敗式目": "A", "1274:文永の役": "A", "1281:弘安の役": "A", "1297:徳政令": "A", "1333:後醍醐天皇": "A", "1334:建武の新政": "A", "1338:足利尊氏": "A", "1392:南北朝": "A", "1404:勘合貿易": "A", "1428:正長の土一揆": "A", "1467:応仁の乱": "A", "1485:山城国一揆": "A", "1488:加賀の一向一揆": "A", "1492:コロンブス": "A", "1517:ルター": "A", "1543:鉄砲": "A", "1549:フランシスコ・ザビエル": "A", "1560:桶狭間の戦い": "A", "1573:室町幕府": "A", "1575:長篠の戦い": "A", "1577:楽市・楽座": "A", "1582:本能寺の変": "A", "1582:太閤検地": "A", "1587:バテレン追放令": "A", "1588:刀狩令": "A", "1590:全国統一": "A", "1592:文禄の役": "A", "1600:関ヶ原の戦い": "A", "1603:徳川家康": "A", "1615:武家諸法度": "A", "1635:参勤交代": "A", "1637:島原・天草一揆": "A", "1639:ポルトガル": "A", "1641:出島": "A", "1642:ピューリタン革命": "A", "1685:徳川綱吉": "A", "1688:名誉革命": "A", "1716:徳川吉宗": "A", "1742:公事方御定書": "A", "1772:田沼意次": "A", "1774:解体新書": "A", "1776:独立宣言": "A", "1787:松平定信": "A", "1789:人権宣言": "A", "1792:ラクスマン": "A", "1798:古事記伝": "A", "1821:伊能忠敬": "A", "1825:異国船打払令": "A", "1837:大塩平八郎": "A", "1840:アヘン戦争": "A", "1841:水野忠邦": "A", "1853:ペリー": "A", "1854:日米和親条約": "A", "1858:日米修好通商条約": "A", "1858:安政の大獄": "A", "1860:桜田門外の変": "A", "1866:薩長同盟": "A", "1867:大政奉還": "A", "1868:五箇条の御誓文": "A", "1868:戊辰戦争": "A", "1869:版籍奉還": "A", "1871:廃藩置県": "A", "1871:岩倉具視": "A", "1872:学制": "A", "1872:富岡製糸場": "A", "1873:徴兵令": "A", "1873:地租改正": "A", "1874:民撰議院設立の建白書": "A", "1877:西南戦争": "A", "1881:国会開設の勅諭": "A", "1885:内閣制度": "A", "1889:大日本帝国憲法": "A", "1890:帝国議会": "A", "1894:領事裁判権": "A", "1894:日清戦争": "A", "1895:下関条約": "A", "1901:八幡製鉄所": "A", "1902:日英同盟": "A", "1904:日露戦争": "A", "1905:ポーツマス条約": "A", "1910:韓国併合": "A", "1911:関税自主権": "A", "1911:辛亥革命": "A", "1914:第一次世界大戦": "A", "1915:二十一か条の要求": "A", "1917:ロシア革命": "A", "1918:米騒動": "A", "1918:原敬": "A", "1918:シベリア出兵": "A", "1919:ベルサイユ条約": "A", "1919:三・一独立運動": "A", "1920:国際連盟": "A", "1922:全国水平社": "A", "1923:関東大震災": "A", "1925:普通選挙法": "A", "1925:治安維持法": "A", "1929:世界恐慌": "A", "1931:満州事変": "A", "1932:五・一五事件": "A", "1932:満州国": "A", "1933:国際連盟": "A", "1936:二・二六事件": "A", "1937:日中戦争": "A", "1938:国家総動員法": "A", "1939:第二次世界大戦": "A", "1941:太平洋戦争": "A", "1945:ポツダム宣言": "A", "1945:原子爆弾": "A", "1945:GHQ": "A", "1946:日本国憲法": "A", "1946:農地改革": "A", "1950:朝鮮戦争": "A", "1951:サンフランシスコ平和条約": "A", "1951:日米安全保障条約": "A", "1956:日ソ共同宣言": "A", "1964:オリンピック": "A", "1965:日韓基本条約": "A", "1972:沖縄": "A", "1972:日中共同声明": "A", "1973:石油危機": "A", "1978:日中平和友好条約": "A", "1989:冷戦": "A", "-300:稲作": "A", "607:法隆寺": "A", "712:古事記": "A", "720:日本書紀": "A", "759:万葉集": "A", "905:古今和歌集": "A", "1000:清少納言": "A", "1008:紫式部": "A", "1175:法然": "A", "1203:金剛力士像": "A", "1224:親鸞": "A", "1397:金閣": "A", "1400:世阿弥": "A", "1489:銀閣": "A", "1587:千利休": "A", "1689:松尾芭蕉": "A", "1703:近松門左衛門": "A", "1831:葛飾北斎": "A", "1833:歌川広重": "A", "1872:福沢諭吉": "A", "-221:始皇帝": "C", "-202:劉邦": "C", "939:藤原純友": "C", "1519:マゼラン": "C", "1541:カルバン": "C", "1607:朝鮮": "C", "1609:オランダ": "C", "1611:明": "C", "1612:キリスト教": "C", "1669:シャクシャイン": "C", "1775:独立戦争": "C", "1804:ナポレオン": "C", "1857:インド大反乱": "C", "1910:大逆事件": "C", "1912:中華民国": "C", "1912:大正": "C", "1868:明治": "C", "1926:昭和": "C", "1989:平成": "C", "1919:ワイマール憲法": "C", "1924:第二次護憲運動": "C", "1927:金融恐慌": "C", "1930:ガンディー": "C", "1941:日ソ中立条約": "C", "1955:アジア・アフリカ会議": "C", "1960:安保闘争": "C", "1970:日本万国博覧会": "C", "1972:冬季オリンピック": "C", "1990:東西ドイツ": "C", "1992:PKO協力法": "C", "1997:香港": "C", "1998:冬季オリンピック": "C", "2002:ワールドカップ": "C", "2002:ユーロ": "C", "2003:イラク戦争": "C", "2009:民主党": "C", "2012:公明党": "C", "1802:東海道中膝栗毛": "C", "1824:シーボルト": "C", "1838:緒方洪庵": "C", "1897:志賀潔": "C", "1949:湯川秀樹": "C", "1968:川端康成": "C", "1212:方丈記": "C", "1330:徒然草": "C", "1205:新古今和歌集": "C", "756:正倉院": "C", "1124:中尊寺金色堂": "C", "1601:朱印船貿易": "C", "1640:宗門改": "C", "1582:天正遣欧使節": "C", "1534:イエズス会": "C", "1576:安土城": "C", "1583:大阪城": "C", "-8000:日本列島": "C", "935:平将門": "C", "1429:琉球王国": "C", "1863:リンカン": "C", "1863:薩英戦争": "C", "1875:樺太・千島交換条約": "C", "1891:田中正造": "C", "1911:工場法": "C", "1886:領事裁判権": "C"};
 const E = [
 [57,'弥生','倭の奴国の王が漢（後漢）に使いを送り、皇帝から〔〕を授けられる','金印','t','chn dawn'],
 [239,'弥生','邪馬台国の女王〔〕が魏に使いを送り、「親魏倭王」の称号を得る','卑弥呼','p','chn dawn'],
-[478,'古墳','倭の五王の一人〔〕が中国の南朝（宋）に使いを送る','倭王武|武','p','chn dawn'],
 [538,'古墳','百済から〔〕が正式に伝えられる','仏教','t','bud kor rel'],
 [593,'飛鳥','〔〕が推古天皇の摂政となり、蘇我馬子と協力して政治を行う','聖徳太子|厩戸皇子|厩戸王','p','ritsu'],
 [603,'飛鳥','家柄にとらわれず有能な人を役人に取り立てるため、〔〕が定められる','冠位十二階','t','ritsu'],
 [604,'飛鳥','役人の心構えを示した〔〕が定められる','十七条の憲法','t','ritsu bud rel'],
 [607,'飛鳥','〔〕が遣隋使として隋に派遣される','小野妹子','p','chn'],
-[630,'飛鳥','第1回の〔〕が派遣され、唐の制度や文化を取り入れ始める','遣唐使','t','chn'],
 [645,'飛鳥','中大兄皇子と中臣鎌足が蘇我氏を倒し、〔〕とよばれる政治改革を始める','大化の改新','t','ritsu land'],
 [663,'飛鳥','百済の復興を助けるために送った倭の軍が、〔〕で唐・新羅の連合軍に敗れる','白村江の戦い','t','kor'],
 [672,'飛鳥','天智天皇の死後、あとつぎをめぐる〔〕が起こり、勝った大海人皇子が天武天皇となる','壬申の乱','t','ritsu'],
-[694,'飛鳥','日本で初めての本格的な都、〔〕がつくられる','藤原京','t','cap'],
 [701,'飛鳥','唐の律令にならった〔〕が完成し、律令国家のしくみが整う','大宝律令','t','ritsu'],
 [710,'奈良','唐の都長安にならった〔〕が奈良につくられる','平城京','t','cap'],
 [712,'奈良','神話や天皇家の歴史を記した〔〕がまとめられる','古事記','t','learn bunka bk1'],
-[723,'奈良','新しく開墾した土地は3代の間の私有を認める〔〕が出される','三世一身法','t','land'],
 [743,'奈良','開墾した土地の永久私有を認める〔〕が出される','墾田永年私財法','t','land'],
 [752,'奈良','聖武天皇の願いでつくられた東大寺の〔〕が完成し、開眼式が行われる','大仏','t','bud bunka bk1 rel'],
 [754,'奈良','唐の高僧〔〕が何度もの失敗の末に来日し、正式な仏教の教えを伝える','鑑真','p','bud chn rel'],
-[784,'奈良','桓武天皇が都を〔〕に移す','長岡京','t','cap'],
 [794,'平安','桓武天皇が都を〔〕に移す','平安京','t','cap'],
 [797,'平安','〔〕が征夷大将軍に任命され、東北地方の蝦夷の抵抗をおさえる','坂上田村麻呂','p','ritsu'],
 [805,'平安','唐から帰国した〔〕が比叡山延暦寺を中心に天台宗を広める','最澄','p','bud rel'],
@@ -475,7 +503,6 @@ const E = [
 [1837,'江戸','元大阪町奉行所の役人〔〕が、ききんに苦しむ人々を救おうと乱を起こす','大塩平八郎','p','ikki reform'],
 [1840,'江戸','清とイギリスの間で〔〕が起こる','アヘン戦争','t','asia',1],
 [1841,'江戸','老中〔〕が天保の改革を始める','水野忠邦','p','reform'],
-[1851,'江戸','清で洪秀全を指導者とする〔〕が起こる','太平天国の乱','t','asia',1],
 [1853,'江戸','アメリカの使節〔〕が浦賀に来航し、開国を求める','ペリー','p','ship'],
 [1854,'江戸','〔〕が結ばれ、下田と函館の2港が開かれる','日米和親条約','t','ship treaty'],
 [1857,'江戸','インドでイギリスの支配に対する〔〕が起こる','インド大反乱','t','asia',1],
@@ -552,14 +579,11 @@ const E = [
 [-300,'弥生','大陸から〔〕が九州北部に伝わり、やがて各地に広がる','稲作','t','dawn',0,'紀元前300|年ごろ'],
 [-221,'弥生','秦の〔〕が中国を統一する','始皇帝','p','china',1],
 [-202,'弥生','〔〕が漢を建国する','劉邦','p','china',1],
-[375,'古墳','ヨーロッパで〔〕の大移動が始まる','ゲルマン人','t','euro',1],
 [589,'古墳','〔〕が中国を統一する','隋','t','china',1],
-[600,'飛鳥','倭が初めて隋に使いを送る（第1回の〔〕）','遣隋使','t','chn'],
 [607,'飛鳥','聖徳太子が斑鳩に〔〕を建てる','法隆寺','t','bud bunka bk1 rel'],
 [618,'飛鳥','隋がほろび、〔〕が中国を統一する','唐','t','china',1],
 [939,'平安','瀬戸内海で〔〕が反乱を起こす','藤原純友','p','bushi'],
 [1195,'鎌倉','宋で学んだ〔〕が博多に聖福寺を開き、禅宗（臨済宗）を広める','栄西','p','bud rel kbud'],
-[1378,'室町','足利義満が京都の室町に〔〕とよばれる邸宅を建て、政治を行う','花の御所','t','muro'],
 [1498,'室町','〔〕がアフリカ南端を回ってインドに到達する航路を開く','バスコ・ダ・ガマ|バスコダガマ','p','euro',1],
 [1519,'戦国','〔〕の船隊が世界一周に出発する（1522年に達成）','マゼラン','p','euro',1],
 [1541,'戦国','スイスで〔〕が宗教改革を進める','カルバン|カルヴァン','p','euro xian rel shukyo',1],
@@ -591,7 +615,6 @@ const E = [
 [1925,'大正','共産主義などを取りしまる〔〕が制定される','治安維持法','t','taisho social'],
 [1926,'昭和前','大正天皇が亡くなり、元号が〔〕に改められる','昭和','t','gengo'],
 [1927,'昭和前','銀行の経営悪化から預金の引き出しが殺到し、〔〕が起こる','金融恐慌','t','path'],
-[1928,'昭和前','戦争を国際紛争の解決手段としないことを約束する〔〕が結ばれる','不戦条約|パリ不戦条約','t','intl',1],
 [1930,'昭和前','世界恐慌の影響で日本でも〔〕が起こり、農村が特に苦しむ','昭和恐慌','t','path'],
 [1930,'昭和前','インドで〔〕が「塩の行進」を行い、非暴力・不服従の抵抗運動を進める','ガンディー|ガンジー','p','asia',1],
 [1932,'昭和前','清の最後の皇帝溥儀を元首とする〔〕が建国される','満州国','t','path chn'],
@@ -642,10 +665,8 @@ const E = [
 [720,'奈良','舎人親王らが歴史書〔〕を完成させる','日本書紀','t','bunka bk1 learn'],
 [756,'奈良','光明皇后が聖武天皇の遺品を東大寺に納め、〔〕に収められる','正倉院','t','bunka bk1'],
 [759,'奈良','天皇から防人・農民までの歌を集めた〔〕がまとめられる','万葉集','t','bunka bk1','','759|年ごろ'],
-[938,'平安','〔〕が京都で念仏をすすめ、「市聖」とよばれる','空也','p','rel'],
 [1000,'平安','〔〕が宮廷の生活を随筆「枕草子」に書く','清少納言','p','bunka bk1','','1000|年ごろ'],
 [1008,'平安','〔〕の「源氏物語」が宮廷で読まれている','紫式部','p','bunka bk1','','1008|年ごろ'],
-[1052,'平安','仏教の力が衰える〔〕の世に入ったとされ、浄土信仰が広まる','末法','t','rel heian'],
 [1124,'平安','奥州藤原氏が平泉に〔〕を建てる','中尊寺金色堂','t','bunka bk1 rel'],
 [1175,'平安','〔〕が念仏をとなえれば救われると説き、浄土宗を開く','法然','p','rel kbud'],
 [1203,'鎌倉','運慶・快慶らが東大寺南大門の〔〕をつくる','金剛力士像','t','bunka bk2'],
@@ -675,10 +696,8 @@ const E = [
 [1833,'江戸','〔〕が浮世絵「東海道五十三次」を発表する','歌川広重|安藤広重','p','bunka bk3','','1833|年ごろ'],
 [1838,'江戸','〔〕が大阪に蘭学の塾（適塾）を開く','緒方洪庵','p','bunka bk3 learn'],
 [1857,'江戸','〔〕が長州藩の萩で松下村塾を受けつぐ','吉田松陰','p','bunka bakumatsu'],
-[1868,'明治','新政府が〔〕を出し、仏教を排斥する動き（廃仏毀釈）が起こる','神仏分離令','t','rel meiji'],
 [1872,'明治','〔〕が「学問のすゝめ」を書き始める','福沢諭吉','p','bunka bk4'],
 [1873,'明治','キリスト教を禁止する高札が撤去され、〔〕の信仰が黙認される','キリスト教','t','rel'],
-[1885,'明治','坪内逍遥が〔〕を書き、ありのままを写す写実主義を唱える','小説神髄','t','bunka bk4'],
 [1890,'明治','〔〕が破傷風の血清療法を発見する','北里柴三郎','p','bunka bk4'],
 [1897,'明治','〔〕が赤痢菌を発見する','志賀潔','p','bunka bk4'],
 [1905,'明治','〔〕が「吾輩は猫である」を発表する','夏目漱石','p','bunka bk4'],
@@ -689,7 +708,8 @@ const E = [
 [1968,'昭和','〔〕が日本人で初めてノーベル文学賞を受賞する','川端康成','p','bunka bk4'],
 ].map((r,i)=>{
   const alts=r[3].split('|');
-  return {id:i,y:r[0],per:r[1],era:ERA_OF[r[1]],text:r[2],key:alts[0],alts,kind:r[4],tags:r[5].split(' '),world:!!r[6],lab:r[7]?r[7].split('|'):null};
+  r.rank=RANK0[r[0]+':'+alts[0]]||'B';
+  return {id:i,y:r[0],per:r[1],era:ERA_OF[r[1]],text:r[2],key:alts[0],alts,kind:r[4],tags:r[5].split(' '),world:!!r[6],lab:r[7]?r[7].split('|'):null,rank:r.rank,rank0:r.rank};
 });
 
 // 記述問題バンク
@@ -757,7 +777,7 @@ function origOf(sid){const t=ITEM[sid];return t.kind==='ev'?ORIG_E[t.i]:ORIG_S[t
 function itemOf(sid){const t=ITEM[sid];return t.kind==='ev'?E[t.i]:ESSAY[t.i]}
 function applyEdits(){
   E.forEach((e,i)=>{const o=EDITS[e.sid]; const c=o&&o.cur; const b=c||ORIG_E[i];
-    e.text=b.text; e.alts=b.alts.slice(); e.key=e.alts[0]; e.deleted=!!(o&&o.deleted); e.edited=!!c;});
+    e.text=b.text; e.alts=b.alts.slice(); e.key=e.alts[0]; e.rank=(o&&o.rank)||e.rank0; e.deleted=!!(o&&o.deleted); e.edited=!!c;});
   ESSAY.forEach((e,i)=>{const o=EDITS[e.sid]; const c=o&&o.cur; const b=c||ORIG_S[i];
     e.q=b.q; e.a=b.a; e.kw=b.kw.map(k=>k.slice()); e.use=(b.use||ORIG_S[i].use||[]).slice(); e.deleted=!!(o&&o.deleted); e.edited=!!c;});
 }
@@ -819,7 +839,8 @@ function editorHTML(sid){
   let h=`<div class="editor" data-editor="${sid}">`;
   if(kind==='ev'){
     h+=`<label for="edText">文（答えが入る場所を〔〕で示す）</label><textarea id="edText" rows="3">${esc(it.text)}</textarea>
-        <label for="edKey">答え（別の書き方も正解にするときは ／ で区切る）</label><input id="edKey" class="search" value="${esc(it.alts.join('／'))}">`;
+        <label for="edKey">答え（別の書き方も正解にするときは ／ で区切る）</label><input id="edKey" class="search" value="${esc(it.alts.join('／'))}">
+        <label>重要度（A：重要　B：標準　C：発展）</label><div class="row">${['A','B','C'].map(k=>`<button class="chip rk rk${k}" data-edrank="${k}" aria-pressed="${(S.edRank||it.rank)===k}">${k}</button>`).join('')}${it.rank!==it.rank0?`<span class="hint-line">（最初は${it.rank0}）</span>`:''}</div>`;
   }else{
     h+=`<label for="edQ">問題文</label><textarea id="edQ" rows="2">${esc(it.q)}</textarea>
         <label for="edA">解答例</label><textarea id="edA" rows="3">${esc(it.a)}</textarea>
@@ -844,7 +865,7 @@ function backupHTML(){
   return `<details class="backup"><summary>編集データの保存先・バックアップ</summary>
     <p class="hint-line">保存先：${Store.mode==='db'?'このサイト（このページを開けるほかの人にも反映されます）':'このブラウザ（ほかの端末やブラウザには反映されません）'}。変更 ${st.ed}件・削除 ${st.del}件。</p>
     <p class="hint-line">下の文字をコピーして保存しておくと、別のブラウザや自分のサイトに移したときに「取り込む」で同じ状態にもどせます。</p>
-    <textarea id="bkOut" readonly rows="4">${esc(JSON.stringify(EDITS))}</textarea>
+    <textarea id="bkOut" readonly rows="4">${esc(JSON.stringify(Object.assign({},EDITS,BAN.size?{__ban:[...BAN]}:{})))}</textarea>
     <div class="actions"><button class="btn" data-act="bkcopy">コピー</button></div>
     ${Store.canEdit?`<textarea id="bkIn" rows="3" placeholder="ここにバックアップを貼り付け"></textarea><div class="actions"><button class="btn" data-act="bkimport">取り込む</button></div>`:''}
   </details>`;
@@ -853,31 +874,51 @@ function backupHTML(){
 /* ---------- 因果関係・流れの解説 ---------- */
 // [原因の年, 原因の語句, 結果の年, 結果の語句, 説明]
 const LINKS = [
+[743,'墾田永年私財法',1086,'白河天皇','墾田永年私財法で開墾地の私有が認められて荘園が広がり、のちに白河天皇（上皇）の院には多くの荘園が寄進されて院政を支えた。'],
+[743,'墾田永年私財法',1185,'地頭','墾田永年私財法をきっかけに全国に荘園が広がり、源頼朝はその荘園や公領ごとに地頭を置いた。'],
+[1185,'地頭',1582,'太閤検地','地頭などが荘園の支配を強めて土地の権利が入り組んだが、太閤検地で耕作者と石高が直接確かめられ、荘園のしくみはなくなった。'],
+[1582,'太閤検地',1873,'地租改正','太閤検地から続いた米で年貢を納めるしくみは、地租改正で地価の3％を現金で納めるしくみに変わった。'],
+[1873,'地租改正',1946,'農地改革','地租改正で土地の所有者が決まり、多くの小作人をかかえる地主が生まれたが、戦後の農地改革で地主の土地が小作人に売りわたされた。'],
+[1274,'文永の役',1404,'勘合貿易','文永の役など元寇のあと途絶えていた中国との正式な国交を足利義満が開き、勘合貿易が始まった。'],
+[1404,'勘合貿易',1601,'朱印船貿易','勘合貿易のように政府が許可した船で貿易を行うしくみは、徳川家康の朱印船貿易に受けつがれた。'],
+[1601,'朱印船貿易',1641,'出島','朱印船貿易で東南アジアに日本人が進出したが、のちに日本人の海外渡航が禁止され、貿易は出島などに限られた。'],
+[1575,'長篠の戦い',1590,'全国統一','長篠の戦いなどで信長が進めた天下統一は、本能寺の変のあと秀吉に受けつがれ、全国統一が完成した。'],
+[1612,'キリスト教',1873,'キリスト教','江戸幕府が禁止したキリスト教は、明治になって欧米諸国の抗議を受け、禁止の高札が撤去されて黙認された。'],
+[1858,'日米修好通商条約',1894,'領事裁判権','日米修好通商条約などで欧米に認めた領事裁判権を、1894年に陸奥宗光が撤廃した。'],
+[1607,'朝鮮',1876,'日朝修好条規','江戸時代に朝鮮通信使を通じて続いた朝鮮との対等な交流は、明治になって日本に有利な不平等条約である日朝修好条規に変わった。'],
+[1876,'日朝修好条規',1910,'韓国併合','日朝修好条規以来朝鮮に進出した日本は、日清・日露戦争をへて韓国併合を行った。'],
+[1910,'韓国併合',1965,'日韓基本条約','韓国併合による植民地支配は日本の敗戦で終わり、戦後、日韓基本条約で韓国との国交が正常化した。'],
+[1889,'大日本帝国憲法',1912,'第一次護憲運動','大日本帝国憲法のもとでも藩閥中心の政治が続いたため、憲法にもとづく政治を求める第一次護憲運動が起こった。'],
+[1885,'内閣制度',1918,'原敬','内閣制度ができて以来、藩閥出身者が中心だった内閣は、原敬のもとで本格的な政党内閣となった。'],
+[1918,'原敬',1932,'五・一五事件','原敬内閣から始まった政党内閣の時代は、五・一五事件で犬養毅首相が暗殺されて終わった。'],
+[1889,'大日本帝国憲法',1946,'日本国憲法','天皇が主権をもつ大日本帝国憲法にかわり、国民主権の日本国憲法が公布された。'],
+[1872,'学制',1947,'教育基本法','学制に始まった近代の学校制度は、戦後、教育基本法によって民主主義にもとづく教育に改められた。'],
+[1890,'教育勅語',1947,'教育基本法','忠君愛国の道徳を示した教育勅語にかわって、教育基本法が教育の基本を定めた。'],
+[712,'古事記',1798,'古事記伝','古事記を研究した本居宣長が古事記伝を完成させ、国学を大成した。'],
+[538,'仏教',752,'大仏','伝来した仏教は奈良時代に国を守る力として重んじられ、聖武天皇が東大寺に大仏をつくらせた。'],
+[752,'大仏',805,'最澄','大仏づくりのように奈良の仏教が政治と深く結びついたことへの反省から、平安時代には山で修行する新しい仏教を最澄が広めた。'],
+[752,'大仏',1203,'金剛力士像','大仏のある東大寺は平氏の焼き打ちで焼けたが、鎌倉時代に再建され、南大門に金剛力士像が置かれた。'],
+[805,'最澄',1224,'親鸞','親鸞も、最澄が開いた比叡山延暦寺で学んだのち、浄土真宗を開いた。'],
+[1840,'アヘン戦争',1911,'辛亥革命','アヘン戦争以後、欧米や日本に圧迫されて弱った清で辛亥革命が起こり、清がほろんだ。'],
+[589,'隋',607,'小野妹子','中国を統一した隋の進んだ制度や文化を学ぶため、倭は小野妹子を遣隋使として派遣した。'],
+[618,'唐',894,'菅原道真','唐の建国後、遣唐使が長く派遣されたが、唐が衰えて航海の危険も大きかったため、菅原道真の提案で停止された。'],
+[645,'大化の改新',743,'墾田永年私財法','大化の改新以来の公地公民で口分田を与えたが、人口が増えて口分田が不足したため、墾田永年私財法で開墾地の永久私有を認めた。'],
+[710,'平城京',794,'平安京','平城京のある奈良では寺院が政治に口を出すようになったため、桓武天皇は長岡京をへて平安京に都を移した。'],
+[752,'大仏',794,'平安京','大仏づくりなどで仏教が保護されて寺院の力が強まり、政治に口を出すようになったため、桓武天皇は長岡京をへて平安京に都を移した。'],
 [-221,'始皇帝',-202,'劉邦','始皇帝の秦は厳しい政治に反発した反乱で短い期間でほろび、そのあと劉邦が漢を建てた。'],
-[589,'隋',600,'遣隋使','中国を統一した隋の進んだ制度や文化を学ぶため、倭は遣隋使を送った。'],
 [589,'隋',618,'唐','隋は大規模な土木工事や高句麗遠征の失敗で国が乱れてほろび、かわって唐が中国を統一した。'],
 [593,'聖徳太子',603,'冠位十二階','摂政となった聖徳太子は、天皇中心の国づくりの一つとして冠位十二階を定め、家柄によらず人材を登用した。'],
 [603,'冠位十二階',604,'十七条の憲法','冠位十二階で役人を能力によって取り立てるしくみをつくり、続いて十七条の憲法で役人の心構えを示した。'],
-[600,'遣隋使',607,'小野妹子','第1回の遣隋使で隋の制度の進み具合を知った倭は、対等な国交をめざして小野妹子を派遣した。'],
-[618,'唐',630,'遣唐使','隋がほろんで唐が建国されたため、今度は唐に遣唐使を送るようになった。'],
 [538,'仏教',607,'法隆寺','伝わった仏教を聖徳太子らがあつく信仰し、法隆寺が建てられた。'],
 [645,'大化の改新',701,'大宝律令','大化の改新で始まった公地公民などの改革が、大宝律令によってしくみとして完成した。'],
-[645,'大化の改新',723,'三世一身法','大化の改新以来の公地公民のもとで口分田を与えたが、人口が増えて口分田が不足したため、三世一身法で開墾をすすめた。'],
 [672,'壬申の乱',701,'大宝律令','壬申の乱に勝った天武天皇が天皇の力を強めて律令づくりを進め、大宝律令の完成につながった。'],
-[694,'藤原京',710,'平城京','藤原京に続いて、律令国家にふさわしい、より大きな都として平城京がつくられた。'],
 [701,'大宝律令',710,'平城京','大宝律令で律令のしくみが整い、それを運営する中心として平城京がつくられた。'],
-[710,'平城京',784,'長岡京','平城京のある奈良では寺院が政治に口を出すようになったため、桓武天皇は都を長岡京に移した。'],
-[784,'長岡京',794,'平安京','長岡京の建設がうまく進まなかったため、改めて平安京に都を移した。'],
-[723,'三世一身法',743,'墾田永年私財法','三世一身法では3代たつと土地を返さなければならず開墾が進まなかったため、墾田永年私財法で永久に私有を認めた。'],
 [712,'古事記',720,'日本書紀','古事記に続いて、国の成り立ちを示す正式な歴史書として日本書紀がまとめられた。'],
 [752,'大仏',756,'正倉院','大仏をつくった聖武天皇が亡くなると、その遺品が東大寺の正倉院に納められた。'],
-[630,'遣唐使',894,'菅原道真','遣唐使は長く派遣されたが、唐が衰えて航海の危険も大きかったため、菅原道真の提案で停止された。'],
 [894,'菅原道真',905,'古今和歌集','菅原道真の提案で遣唐使が停止され、唐の文化の影響がうすれて国風文化が栄え、かな文字を使った古今和歌集がつくられた。'],
 [894,'菅原道真',1000,'清少納言','菅原道真の提案で遣唐使が停止され、国風文化が栄える中で、清少納言がかな文字で随筆を書いた。'],
 [894,'菅原道真',1008,'紫式部','菅原道真の提案で遣唐使が停止され、国風文化が栄える中で、紫式部がかな文字で物語を書いた。'],
 [1016,'藤原道長',1053,'平等院鳳凰堂','藤原道長のもとで全盛をむかえた摂関政治を子の頼通が受けつぎ、平等院鳳凰堂を建てた。'],
-[1052,'末法',1053,'平等院鳳凰堂','末法の世への不安から極楽浄土へのあこがれが強まり、翌年、阿弥陀堂である平等院鳳凰堂が建てられた。'],
-[1052,'末法',1175,'法然','末法の不安が続く中で、念仏による救いを説く法然の浄土宗が広まった。'],
 [1016,'藤原道長',1086,'白河天皇','藤原道長の時代に全盛だった摂関政治は、藤原氏と血縁の薄い天皇の即位でおとろえ、白河天皇（上皇）が院政を始めた。'],
 [1086,'白河天皇',1156,'保元の乱','白河天皇（上皇）が始めた院政のもとで天皇と上皇が対立し、それぞれが武士を味方につけて保元の乱が起こった。'],
 [1156,'保元の乱',1159,'平治の乱','保元の乱でともに活躍した平清盛と源義朝が、今度は互いに対立して平治の乱が起こった。'],
@@ -892,7 +933,6 @@ const LINKS = [
 [1333,'後醍醐天皇',1334,'建武の新政','鎌倉幕府をほろぼした後醍醐天皇が、天皇中心の建武の新政を始めた。'],
 [1334,'建武の新政',1338,'足利尊氏','建武の新政が公家を重んじて武士の不満を招き、足利尊氏が兵をあげて新しい幕府を開いた。'],
 [1338,'足利尊氏',1392,'南北朝','足利尊氏が立てた京都の北朝と、後醍醐天皇の吉野の南朝が約60年対立したのち、足利義満が南北朝を統一した。'],
-[1378,'花の御所',1392,'南北朝','花の御所を構えて力をつけた足利義満が、南北朝を統一した。'],
 [1392,'南北朝',1404,'勘合貿易','南北朝を統一して力を強めた足利義満が明と国交を開き、勘合貿易を始めた。'],
 [1397,'金閣',1489,'銀閣','足利義満の金閣に代表される北山文化に続いて、足利義政のころには禅宗の影響を受けた東山文化が生まれ、銀閣が建てられた。'],
 [1397,'金閣',1400,'世阿弥','金閣を建てた足利義満の保護を受けて、観阿弥・世阿弥が能を大成した。'],
@@ -936,7 +976,6 @@ const LINKS = [
 [1792,'ラクスマン',1825,'異国船打払令','ラクスマンのロシアに続いてイギリスやアメリカの船も日本に近づくようになり、幕府は異国船打払令で撃退を命じた。'],
 [1833,'天保のききん',1837,'大塩平八郎','天保のききんで苦しむ人々を奉行所が救わなかったため、大塩平八郎が乱を起こした。'],
 [1837,'大塩平八郎',1841,'水野忠邦','元役人の大塩平八郎の乱などで幕府の権威がゆらぎ、水野忠邦が立て直しのために天保の改革を始めた。'],
-[1840,'アヘン戦争',1851,'太平天国の乱','アヘン戦争の敗戦後、重い税などで民衆の不満が高まり、清で太平天国の乱が起こった。'],
 [1840,'アヘン戦争',1997,'香港','アヘン戦争の結果イギリス領となった香港が、約150年後に中国に返還された。'],
 [1853,'ペリー',1854,'日米和親条約','ペリーは翌年再び来航し、幕府は開国を受け入れて日米和親条約を結んだ。'],
 [1854,'日米和親条約',1858,'日米修好通商条約','日米和親条約で下田に着任した総領事ハリスが通商を強く求め、日米修好通商条約が結ばれた。'],
@@ -1024,7 +1063,6 @@ const LINKS = [
 [1910,'韓国併合',1919,'三・一独立運動','韓国併合による日本の植民地支配に対して、朝鮮の人々が独立を求めて三・一独立運動を起こした。'],
 [1912,'第一次護憲運動',1918,'原敬','第一次護憲運動で民衆の力が示され、やがて原敬が本格的な政党内閣をつくった。'],
 [1920,'国際連盟',1921,'ワシントン会議','国際連盟の発足など国際協調の動きが進み、海軍の軍備を制限するワシントン会議が開かれた。'],
-[1921,'ワシントン会議',1928,'不戦条約','ワシントン会議での軍備制限に続いて、戦争そのものを否定する不戦条約が結ばれた。'],
 [1931,'満州事変',1932,'五・一五事件','満州事変で軍部の力が強まる中、政党政治に不満をもつ海軍の青年将校らが五・一五事件を起こした。'],
 [1932,'五・一五事件',1936,'二・二六事件','五・一五事件で政党内閣が終わって軍部の発言力が強まり、陸軍の青年将校らが二・二六事件を起こした。'],
 [1936,'二・二六事件',1937,'日中戦争','二・二六事件のあと軍部の力がさらに強まり、翌年、日中戦争が始まった。'],
@@ -1038,19 +1076,16 @@ const LINKS = [
 [1990,'東西ドイツ',1993,'EU','東西ドイツの統一など冷戦後のヨーロッパで統合が進み、EUが発足した。'],
 [538,'仏教',604,'十七条の憲法','伝わった仏教を重んじた聖徳太子は、十七条の憲法でも仏教を敬うよう定めた。'],
 [752,'大仏',754,'鑑真','大仏がつくられるなど仏教が重んじられる中、正式な戒律を授ける僧として鑑真が招かれた。'],
-[752,'大仏',784,'長岡京','大仏づくりなどで仏教が保護されて寺院の力が強まり、政治に口を出すようになったため、都を長岡京に移した。'],
 [805,'最澄',1175,'法然','法然は、最澄が開いた比叡山延暦寺で学んだのち、比叡山を出て浄土宗を開いた。'],
 [805,'最澄',1227,'道元','道元も、最澄が開いた比叡山延暦寺で学んだのち、宋に渡って禅を学んだ。'],
 [805,'最澄',1253,'日蓮','日蓮も、最澄が開いた比叡山延暦寺などで学んだのち、日蓮宗を開いた。'],
 [1224,'親鸞',1488,'加賀の一向一揆','親鸞が開いた浄土真宗（一向宗）の信者たちが、のちに団結して加賀の一向一揆を起こした。'],
 [905,'古今和歌集',1205,'新古今和歌集','古今和歌集にならって、天皇の命令による新古今和歌集が編集された。'],
-[1052,'末法',1124,'中尊寺金色堂','末法の不安から広まった浄土信仰が地方にも広がり、奥州藤原氏も中尊寺金色堂を建てた。'],
 [1167,'平清盛',1203,'金剛力士像','平清盛の平氏の焼き打ちで焼けた東大寺が鎌倉時代に再建され、南大門に金剛力士像が置かれた。'],
 [1467,'応仁の乱',1489,'銀閣','応仁の乱のあと政治への関心を失った足利義政は、京都の東山に銀閣を建てた。'],
 [-500,'釈迦',538,'仏教','釈迦がインドで開いた仏教は、中国・朝鮮半島を通って日本に伝わった。'],
 [610,'ムハンマド',1096,'十字軍','ムハンマドが開いたイスラム教の勢力が聖地エルサレムを支配したため、キリスト教徒は奪回をめざして十字軍を送った。'],
 [1096,'十字軍',1492,'コロンブス','十字軍などでアジアへの関心が高まり、香辛料などを求めて新しい航路の開拓が進み、コロンブスが大西洋を横断した。'],
-[1868,'神仏分離令',1873,'キリスト教','神仏分離令など宗教政策を進める中、欧米諸国からの抗議を受けて、政府はキリスト教禁止の高札を撤去した。'],
 ];
 
 // テーマごとの大きな流れ
@@ -1103,6 +1138,21 @@ kbud:'末法の不安が広がる中で、わかりやすく実行しやすい�
 shukyo:'仏教・儒教・キリスト教・イスラム教が生まれ、ヨーロッパでは宗教改革によってキリスト教が新旧に分かれた。'
 };
 
+// 順番を押さえておきたい「定番の流れ」（この中の前後関係は入試でよく問われる）
+const SEQS=[["飛鳥〜奈良の国づくり", ["593:聖徳太子", "603:冠位十二階", "604:十七条の憲法", "607:小野妹子", "645:大化の改新", "663:白村江の戦い", "672:壬申の乱", "701:大宝律令", "710:平城京", "743:墾田永年私財法", "752:大仏", "794:平安京"]], ["平安の政治と武士の台頭", ["794:平安京", "894:菅原道真", "1016:藤原道長", "1086:白河天皇", "1156:保元の乱", "1159:平治の乱", "1167:平清盛", "1185:地頭"]], ["鎌倉幕府の成立とおとろえ", ["1185:地頭", "1192:征夷大将軍", "1221:承久の乱", "1232:御成敗式目", "1274:文永の役", "1281:弘安の役", "1297:徳政令", "1333:後醍醐天皇"]], ["南北朝から室町幕府", ["1333:後醍醐天皇", "1334:建武の新政", "1338:足利尊氏", "1392:南北朝", "1404:勘合貿易", "1428:正長の土一揆", "1467:応仁の乱", "1485:山城国一揆", "1488:加賀の一向一揆"]], ["天下統一", ["1543:鉄砲", "1549:フランシスコ・ザビエル", "1560:桶狭間の戦い", "1573:室町幕府", "1575:長篠の戦い", "1577:楽市・楽座", "1582:本能寺の変", "1587:バテレン追放令", "1588:刀狩令", "1590:全国統一", "1592:文禄の役", "1600:関ヶ原の戦い"]], ["江戸幕府の支配と鎖国", ["1600:関ヶ原の戦い", "1603:徳川家康", "1615:武家諸法度", "1635:参勤交代", "1637:島原・天草一揆", "1639:ポルトガル", "1641:出島"]], ["江戸の三大改革", ["1685:徳川綱吉", "1716:徳川吉宗", "1742:公事方御定書", "1772:田沼意次", "1787:松平定信", "1825:異国船打払令", "1837:大塩平八郎", "1841:水野忠邦"]], ["開国から倒幕", ["1792:ラクスマン", "1825:異国船打払令", "1853:ペリー", "1854:日米和親条約", "1858:日米修好通商条約", "1858:安政の大獄", "1860:桜田門外の変", "1866:薩長同盟", "1867:大政奉還", "1868:戊辰戦争"]], ["明治維新", ["1867:大政奉還", "1868:五箇条の御誓文", "1869:版籍奉還", "1871:廃藩置県", "1873:徴兵令", "1873:地租改正", "1877:西南戦争"]], ["自由民権運動と立憲政治", ["1874:民撰議院設立の建白書", "1877:西南戦争", "1881:国会開設の勅諭", "1885:内閣制度", "1889:大日本帝国憲法", "1890:帝国議会"]], ["条約改正と日清・日露戦争", ["1871:岩倉具視", "1886:領事裁判権", "1894:領事裁判権", "1894:日清戦争", "1895:下関条約", "1902:日英同盟", "1904:日露戦争", "1905:ポーツマス条約", "1910:韓国併合", "1911:関税自主権"]], ["第一次世界大戦と大正デモクラシー", ["1914:第一次世界大戦", "1915:二十一か条の要求", "1917:ロシア革命", "1918:シベリア出兵", "1918:米騒動", "1918:原敬", "1919:ベルサイユ条約", "1920:国際連盟", "1923:関東大震災", "1925:普通選挙法"]], ["戦争への道", ["1929:世界恐慌", "1931:満州事変", "1932:五・一五事件", "1933:国際連盟", "1936:二・二六事件", "1937:日中戦争", "1938:国家総動員法", "1939:第二次世界大戦", "1941:太平洋戦争", "1945:ポツダム宣言"]], ["戦後改革と独立", ["1945:ポツダム宣言", "1945:GHQ", "1946:日本国憲法", "1946:農地改革", "1950:朝鮮戦争", "1951:サンフランシスコ平和条約", "1956:日ソ共同宣言"]], ["戦後の外交と経済", ["1951:サンフランシスコ平和条約", "1956:日ソ共同宣言", "1964:オリンピック", "1965:日韓基本条約", "1972:沖縄", "1972:日中共同声明", "1973:石油危機", "1978:日中平和友好条約", "1989:冷戦"]], ["欧米の近代化", ["1492:コロンブス", "1517:ルター", "1642:ピューリタン革命", "1688:名誉革命", "1776:独立宣言", "1789:人権宣言", "1840:アヘン戦争"]], ["仏教の移り変わり", ["538:仏教", "607:法隆寺", "752:大仏", "805:最澄", "1053:平等院鳳凰堂", "1175:法然", "1224:親鸞"]], ["文化の移り変わり", ["607:法隆寺", "752:大仏", "905:古今和歌集", "1008:紫式部", "1053:平等院鳳凰堂", "1203:金剛力士像", "1397:金閣", "1489:銀閣", "1689:松尾芭蕉", "1774:解体新書", "1831:葛飾北斎"]]];
+const SEQ_OF={};
+function buildSeqs(){ SEQS.forEach(([name,list],si)=>list.forEach((k,pi)=>{ const [y,key]=[+k.slice(0,k.indexOf(':')),k.slice(k.indexOf(':')+1)]; const e=E.find((x,i)=>x.y===y&&ORIG_E[i].alts[0]===key); if(e) (SEQ_OF[e.sid]=SEQ_OF[e.sid]||[]).push(si); else console.warn('seq not found',k); })); }
+function canonPair(a,b){ const A=SEQ_OF[a.sid]||[], B=SEQ_OF[b.sid]||[]; const si=A.find(x=>B.includes(x)); return si===undefined?null:SEQS[si][0]; }
+// 並び替え1問の「順番の重要度」：隣どうしが定番の流れ・因果関係・重要語句でつながっているか
+function orderImportance(items){
+  const s=items.slice().sort((a,b)=>a.y-b.y); let canon=0, rel=0;
+  for(let i=0;i<s.length-1;i++){ const a=s[i], b=s[i+1]; const c=canonPair(a,b), l=LINKMAP[a.sid+'>'+b.sid]; if(c) canon++; if(c||l) rel++; }
+  const n=s.length-1; const allA=s.every(e=>e.rank==='A');
+  const level= canon===n ? 'A' : (rel>=Math.ceil(n/2)&&s.filter(e=>e.rank==='A').length>=s.length-1) ? 'B' : 'C';
+  const seqName=(()=>{ for(let i=0;i<s.length-1;i++){ const c=canonPair(s[i],s[i+1]); if(c) return c; } return null; })();
+  return {level,canon,rel,n,allA,seqName,score:canon*3+rel*2+(allA?2:0)};
+}
+const IMP_LABEL={A:'定番の流れ',B:'標準',C:'細かい順番'};
 const LINKMAP = {};
 function buildLinks(){
   const find=(y,k)=>E.find((e,i)=>e.y===y&&ORIG_E[i].alts[0]===k);
@@ -1135,9 +1185,10 @@ function flowSteps(sorted){
 }
 
 buildLinks();
+buildSeqs();
 /* ---------- 状態 ---------- */
 const S = {mode:'order', eras:new Set(ERAS.map(e=>e[0])), world:true, n:'r', theme:'auto', choice:true, hint:true,
-  omode:'prefer', listTheme:'all', listKind:'ev', listFilter:'all', editing:null, editFocus:false, flash:'', q:'', sel:new Set(), custom:[],
+  omode:'prefer', ordImp:'prefer', noObvious:true, ranks:['A','B','C'], rankWeight:true, cands:[], candOpen:false, candTarget:20, span:'free', recentThemes:[], avoidThemes:[], exclude:null, listTheme:'all', listKind:'ev', listFilter:'all', editing:null, editFocus:false, flash:'', q:'', sel:new Set(), custom:[],
   pr:{title:'歴史 確認プリント', order:5, orderN:'r', fill:8, bank:true, exam:4, essay:2, answers:true}, examFmt:'rand',
   sheet:null, total:0, ok:0, streak:0, qno:0, cur:null, answered:false, lastTheme:null, recent:[], msg:''};
 try{const m=localStorage.getItem('rk-mode'); if(['order','fill','essay','exam','list','print'].includes(m)) S.mode=m;}catch(e){}
@@ -1151,13 +1202,14 @@ const rand=a=>a[Math.floor(Math.random()*a.length)];
 const yStr=y=>y<0?`紀元前${-y}`:String(y);
 const yv=e=>e.lab?e.lab[0]:yStr(e.y), yu=e=>e.lab?e.lab[1]:'年';
 const perLabel=p=>p==='昭和前'?'昭和':p;
+const rankTag=e=>`<span class="rkb rk${e.rank}" title="重要度">${e.rank}</span>`;
 const eraTag=e=>`<span class="era" style="--c:var(${e.world?'--e-world':ERA_COLOR[e.era]})">${e.world?'世界':esc(perLabel(e.per))}</span>`;
 const filled=e=>esc(e.text).replace('〔〕',`<b>${esc(e.key)}</b>`);
 const plain=e=>esc(e.text).replace('〔〕',esc(e.key));
 const norm=s=>s.normalize('NFKC').replace(/[\s・･,、。（）()「」]/g,'').toLowerCase();
 const byId=id=>E[id];
 
-function pool(){return E.filter(e=>!e.deleted&&S.eras.has(e.era)&&(S.world||!e.world))}
+function pool(){return E.filter(e=>!e.deleted&&S.ranks.includes(e.rank)&&S.eras.has(e.era)&&(S.world||!e.world)&&!(S.exclude&&S.exclude.has(e.id)))}
 const distinctYears=l=>new Set(l.map(e=>e.y)).size;
 
 // 年の間隔をあけて n 件選ぶ（avoid にある id はなるべく避ける）
@@ -1183,6 +1235,10 @@ function pickChain(list,n,avoid){
   for(const e of rest){ if(out.length>=n) break; if(out.every(o=>o.y!==e.y)) out.push(e); }
   return out.length>=n?out:null;
 }
+// 重要度による重み（A:3 B:2 C:1）をつけて並べかえる
+const RW={A:3,B:2,C:1};
+function wshuffle(a){ if(!S.rankWeight) return shuffle(a); return a.map(e=>[Math.pow(Math.random(),1/(RW[e.rank]||2)),e]).sort((x,y)=>y[0]-x[0]).map(x=>x[1]); }
+function wpick(arr,score){ if(!S.rankWeight||!arr.length) return rand(arr); const w=arr.map(score); const t=w.reduce((a,b)=>a+b,0); let r=Math.random()*t; for(let i=0;i<arr.length;i++){ r-=w[i]; if(r<=0) return arr[i]; } return arr[arr.length-1]; }
 function pickSpread(list,n,avoid){
   if(S.omode==='prefer'&&Math.random()<0.7){ const c=pickChain(list,n,avoid); if(c) return c; }
   const fresh=avoid?list.filter(e=>!avoid.has(e.id)):list;
@@ -1190,7 +1246,7 @@ function pickSpread(list,n,avoid){
     for(const gap of [3,1]){
       for(let t=0;t<25;t++){
         const out=[];
-        for(const e of shuffle(src)){
+        for(const e of wshuffle(src)){
           if(out.every(o=>Math.abs(o.y-e.y)>=gap)) out.push(e);
           if(out.length===n) return out;
         }
@@ -1203,53 +1259,167 @@ function themesWith(P,min){return Object.keys(THEMES).filter(t=>distinctYears(P.
 
 /* ---------- 問題生成 ---------- */
 // theme: 'auto'=関連テーマでそろえる / 'mix'=テーマなし / テーマキー
+// あからさまな組み合わせ（問題文や語句を見ただけで順番がわかるもの）
+let BAN=new Set(); try{ BAN=new Set(JSON.parse(localStorage.getItem('rk-ban')||'[]')); }catch(e){}
+const pairKey=(a,b)=>[a.sid,b.sid].sort().join('~');
+function saveBan(){ try{ localStorage.setItem('rk-ban',JSON.stringify([...BAN])); }catch(e){} }
+function obviousPair(a,b){
+  if(a.y>b.y) [a,b]=[b,a];
+  if(BAN.has(pairKey(a,b))) return '一緒に出さない組に登録ずみ';
+  const ka=a.alts.filter(k=>k.length>=2), kb=b.alts.filter(k=>k.length>=2);
+  if(ka.some(k=>kb.includes(k))) return '同じ語句';
+  // 国名・地名は文中に出てきても順番のヒントにならないので除く
+  const PLACE=['朝鮮','ソ連','ソビエト連邦','オランダ','ポルトガル','沖縄'];
+  if(ka.some(k=>!PLACE.includes(k)&&b.text.includes(k))) return `あとのできごとの文に「${a.key}」が出てくる`;
+  if(kb.some(k=>!PLACE.includes(k)&&a.text.includes(k))) return `前のできごとの文に「${b.key}」が出てくる`;
+  if(ka.some(k=>kb.some(j=>j.includes(k)||k.includes(j)))) return '語句の一部が同じ（「古事記」と「古事記伝」など）';
+  if(/再び|翌年|続いて|に続き/.test(b.text)&&a.tags.some(t=>b.tags.includes(t))&&b.y-a.y<=40) return '文中の「再び」などで順番がわかる';
+  return null;
+}
+function obviousIn(items){ for(let i=0;i<items.length;i++) for(let j=i+1;j<items.length;j++){ const r=obviousPair(items[i],items[j]); if(r) return r; } return null; }
 function strictChains(list,n){
   const ids=new Set(list.map(e=>e.sid)); const bySid=Object.fromEntries(list.map(e=>[e.sid,e])); const next={};
   for(const k in LINKMAP){ const [a,b]=k.split('>'); if(ids.has(a)&&ids.has(b)&&bySid[a].y<bySid[b].y) (next[a]=next[a]||[]).push(b); }
   const out=[];
   const dfs=p=>{ if(p.length===n){out.push(p.map(x=>bySid[x]));return;} for(const x of next[p[p.length-1]]||[]) dfs([...p,x]); };
   for(const a in next) dfs([a]);
-  return out;
+  return S.noObvious?out.filter(c=>!obviousIn(c)):out;
 }
 function mainTheme(items){
   const cnt={}; items.forEach(e=>e.tags.forEach(t=>cnt[t]=(cnt[t]||0)+1));
   const best=Object.keys(cnt).filter(t=>!['bunka','rel'].includes(t)||Object.keys(cnt).length<3).sort((a,b)=>cnt[b]-cnt[a])[0];
   return best||null;
 }
+// 時代の範囲（free:こだわらない / same:同じ時代の中で / cross:すべて別の時代）
+const perKey=e=>({'戦国':'室町','昭和前':'昭和'}[e.per]||e.per);
+function spanOk(items){
+  if(S.span==='cross') return new Set(items.map(perKey)).size===items.length;
+  if(S.span==='same') return new Set(items.map(perKey)).size===1;
+  return true;
+}
+function pickSpan(list,n,avoid){
+  if(S.span==='same'){
+    const g={}; list.forEach(e=>(g[perKey(e)]=g[perKey(e)]||[]).push(e));
+    const ok=shuffle(Object.values(g).filter(a=>distinctYears(a)>=n));
+    for(const a of ok){ const it=pickSpread(a,n,avoid); if(it) return it; }
+    return null;
+  }
+  if(S.span==='cross'){
+    if(S.omode==='prefer'&&Math.random()<0.7){ for(let t=0;t<8;t++){ const c=pickChain(list,n,avoid); if(c&&spanOk(c)) return c; } }
+    for(let t=0;t<40;t++){ const out=[]; for(const e of shuffle(list)){ if(avoid&&avoid.has(e.id)&&t<20) continue; if(out.every(o=>perKey(o)!==perKey(e)&&o.y!==e.y)) out.push(e); if(out.length===n) return out; } }
+    return null;
+  }
+  return pickSpread(list,n,avoid);
+}
+const spanLabel=()=>S.span==='cross'?'（時代をまたぐ）':S.span==='same'?'（同じ時代）':'';
 function makeStrict(theme,n,avoid){
   S.nRandom=(S.n==='r'&&S.mode!=='print')||(S.mode==='print'&&S.pr.orderN==='r');
   let L=pool(); if(theme!=='auto'&&theme!=='mix') L=L.filter(e=>e.tags.includes(theme));
   for(let m=n;m>=3;m--){
-    let ch=strictChains(L,m); if(!ch.length) continue;
+    let ch=strictChains(L,m).filter(spanOk); if(!ch.length) continue;
     const fresh=avoid?ch.filter(c=>c.every(e=>!avoid.has(e.id))):ch;
     const pickFrom=fresh.length?fresh:ch;
-    let c=pickFrom.filter(c=>{const tk=mainTheme(c);return tk!==S.lastTheme;}); if(!c.length) c=pickFrom;
-    const it=rand(c);
+    const av=new Set([S.lastTheme,...(S.avoidThemes||[])].filter(Boolean));
+    let c=pickFrom.filter(c=>!av.has(mainTheme(c))); if(!c.length) c=pickFrom.filter(c=>mainTheme(c)!==S.lastTheme); if(!c.length) c=pickFrom;
+    const it=wpick(c,ch=>ch.reduce((a,e)=>a+(RW[e.rank]||2),0)/ch.length);
     const tk=(theme!=='auto'&&theme!=='mix')?theme:mainTheme(it);
     S.lastTheme=tk;
-    return {type:'order',theme:(tk?THEMES[tk]:'因果関係でつながるできごと')+(m<n&&!S.nRandom?`（${m}つ）`:''),tk,items:shuffle(it),picked:[],strict:true};
+    return {type:'order',theme:(tk?THEMES[tk]:'因果関係でつながるできごと')+spanLabel()+(m<n&&!S.nRandom?`（${m}つ）`:''),tk,items:shuffle(it),picked:[],strict:true};
+  }
+  return null;
+}
+function pickCanon(theme,n,avoid){
+  let P=pool(); if(theme!=='auto'&&theme!=='mix') P=P.filter(e=>e.tags.includes(theme));
+  const inP=new Set(P.map(e=>e.sid));
+  const seqs=shuffle(SEQS.map((x,i)=>i)).filter(si=>!(S.avoidThemes||[]).includes('seq'+si));
+  for(const si of seqs){
+    const evs=SEQS[si][1].map(k=>{ const y=+k.slice(0,k.indexOf(':')), key=k.slice(k.indexOf(':')+1); return E.find((x,i)=>x.y===y&&ORIG_E[i].alts[0]===key); }).filter(e=>e&&inP.has(e.sid));
+    const fresh=avoid?evs.filter(e=>!avoid.has(e.id)):evs;
+    for(const src of [fresh,evs]){
+      if(distinctYears(src)<n) continue;
+      for(let t=0;t<20;t++){ const it=pickSpread(src,n); if(it&&spanOk(it)&&!(S.noObvious&&obviousIn(it))) return {items:it,si}; }
+    }
   }
   return null;
 }
 function makeOrder(theme,n,avoid){
+  if(S.ordImp==='canon'&&S.omode!=='strict'){
+    const nn=n==='r'?(Math.random()<0.5?3:4):n;
+    let r=pickCanon(theme,nn,avoid)||(n==='r'?pickCanon(theme,7-nn,avoid):null);
+    if(!r) return null;
+    const imp=orderImportance(r.items);
+    return {type:'order',theme:SEQS[r.si][0],tk:mainTheme(r.items),items:shuffle(r.items),picked:[],imp};
+  }
+  if(S.ordImp==='free') return withImp(makeOrderA(theme,n,avoid));
+  // 定番を多めに／定番だけ（つながり厳密モード）：いくつか作って、順番の重要度が高いものを選ぶ
+  const cands=[]; for(let t=0;t<(S.ordImp==='canon'?12:5);t++){ const q=makeOrderA(theme,n,avoid); if(q) cands.push(withImp(q)); }
+  if(!cands.length) return null;
+  let pool2=S.ordImp==='canon'?cands.filter(q=>q.imp.level==='A'):cands;
+  if(!pool2.length) pool2=cands;
+  pool2.sort((a,b)=>b.imp.score-a.imp.score);
+  return pool2[0];
+}
+function withImp(q){ if(q) q.imp=orderImportance(q.items); return q; }
+function makeOrderA(theme,n,avoid){
+  if(!S.noObvious) return makeOrder2(theme,n,avoid);
+  let q=null; for(let t=0;t<15;t++){ q=makeOrder2(theme,n,avoid); if(!q||!obviousIn(q.items)) return q; }
+  return q;
+}
+function makeOrder2(theme,n,avoid){
   if(n==='r'){ const f=Math.random()<0.5?3:4; const keep=S.lastTheme; const q=makeOrder1(theme,f,avoid); if(q&&q.items.length===f) return q; S.lastTheme=keep; return makeOrder1(theme,7-f,avoid)||q; }
   return makeOrder1(theme,n,avoid);
 }
 function makeOrder1(theme,n,avoid){
   if(S.omode==='strict') return makeStrict(theme,n,avoid);
   const P=pool();
-  if(theme==='mix'){const it=pickSpread(P,n,avoid);return it&&{type:'order',theme:'時代をまたいだ総合問題',items:shuffle(it),picked:[]};}
+  if(theme==='mix'){const it=pickSpan(P,n,avoid);return it&&{type:'order',theme:'時代をまたいだ総合問題'+(S.span==='same'?'（同じ時代）':''),items:shuffle(it),picked:[]};}
   if(theme==='auto'){
-    const avail=themesWith(P,n); let c=avail.filter(t=>t!==S.lastTheme); if(!c.length)c=avail;
-    for(const t of shuffle(c)){const it=pickSpread(P.filter(e=>e.tags.includes(t)),n,avoid); if(it){S.lastTheme=t;return {type:'order',theme:THEMES[t],tk:t,items:shuffle(it),picked:[]};}}
+    const av=new Set([S.lastTheme,...(S.avoidThemes||[])].filter(Boolean));
+    const avail=themesWith(P,n); let c=avail.filter(t=>!av.has(t)); if(!c.length) c=avail.filter(t=>t!==S.lastTheme); if(!c.length)c=avail;
+    for(const t of shuffle(c)){const it=pickSpan(P.filter(e=>e.tags.includes(t)),n,avoid); if(it){S.lastTheme=t;return {type:'order',theme:THEMES[t]+spanLabel(),tk:t,items:shuffle(it),picked:[]};}}
+    // テーマの中で作れないときは全体から
+    if(S.span!=='free'){ const it=pickSpan(P,n,avoid); if(it) return {type:'order',theme:'時代をまたいだ総合問題'+spanLabel(),items:shuffle(it),picked:[]}; }
     return null;
   }
   const L=P.filter(e=>e.tags.includes(theme)); const m=Math.min(n,distinctYears(L));
   if(m<3) return null;
-  const it=pickSpread(L,m,avoid); return it&&{type:'order',theme:THEMES[theme],tk:theme,items:shuffle(it),picked:[]};
+  const it=pickSpan(L,m,avoid)||(m>3?pickSpan(L,3,avoid):null); return it&&{type:'order',theme:THEMES[theme]+spanLabel(),tk:theme,items:shuffle(it),picked:[]};
 }
-function genOrder(){ const q=makeOrder(S.theme,S.n,new Set(S.recent)); if(q) q.items.forEach(e=>{S.recent.push(e.id); if(S.recent.length>30)S.recent.shift();}); return q; }
+function genOrder(){
+  // 直前の問題のできごとは使わず、最近出たテーマも避ける
+  const prev=S.cur&&S.cur.type==='order'?S.cur.items.map(e=>e.id):[];
+  S.exclude=new Set(prev); S.avoidThemes=S.recentThemes.slice(-4);
+  let q=makeOrder(S.theme,S.n,new Set(S.recent));
+  if(!q){ S.avoidThemes=[]; q=makeOrder(S.theme,S.n,new Set(S.recent)); }
+  if(!q){ S.exclude=null; q=makeOrder(S.theme,S.n,new Set(S.recent)); }
+  S.exclude=null; S.avoidThemes=[];
+  if(q&&q.tk){ S.recentThemes.push(q.tk); if(S.recentThemes.length>6) S.recentThemes.shift(); }
+  if(q) q.items.forEach(e=>{S.recent.push(e.id); if(S.recent.length>30)S.recent.shift();});
+  return q;
+}
 
+// まぎらわしい語句（誤りの選択肢）を、ランダムではなく「似ている度合い」で選ぶ
+const perK=e=>({'戦国':'室町','昭和前':'昭和'}[e.per]||e.per);
+function confusables(e,exclude){
+  const ex=new Set([...(exclude||[]),...e.alts]);
+  const k1=e.key.replace(/[（）()「」]/g,''); const t1=k1.slice(-1), t2=k1.slice(-2);
+  const seen=new Set(); const out=[];
+  for(const x of E){
+    if(x.deleted||x===e||x.kind!==e.kind||ex.has(x.key)||seen.has(x.key)||x.lab) continue;
+    const k2=x.key.replace(/[（）()「」]/g,''); const d=Math.abs(x.y-e.y);
+    let sc=0; const why=[];
+    if(k2.length>=2&&k2.slice(-2)===t2&&t2.length===2){ sc+=6; why.push(`同じ「${t2}」`); }
+    else if(k2.slice(-1)===t1){ sc+=4; why.push(`同じ「${t1}」`); }
+    const sh=x.tags.filter(t=>e.tags.includes(t)).sort((a,b)=>(['bunka','rel'].includes(a)?1:0)-(['bunka','rel'].includes(b)?1:0)); if(sh.length){ sc+=3; why.push(`同じテーマ（${THEMES[sh[0]]}）`); }
+    if(perK(x)===perK(e)){ sc+=2; why.push(`同じ${perK(e)}時代`); }
+    sc+= d<=30?3:d<=100?2:d<=300?1:-3;
+    if(d<=30&&!why.some(w=>w.includes('時代'))) why.push('近い時期');
+    if(LINKMAP[x.sid+'>'+e.sid]||LINKMAP[e.sid+'>'+x.sid]){ sc+=2; why.push('つながりのあるできごと'); }
+    if(x.world===e.world) sc+=1;
+    seen.add(x.key); out.push({x,key:x.key,sc,d,why});
+  }
+  return out.sort((a,b)=>b.sc-a.sc||a.d-b.d);
+}
 function genFill(){
   const P=pool(); let t=S.theme, rows;
   if(t==='mix'){ rows=pickSpread(P,4); }
@@ -1264,10 +1434,7 @@ function genFill(){
   const target=rand(tc);
   S.recent.push(target.id); if(S.recent.length>30) S.recent.shift();
   const shown=new Set(rows.map(r=>r.key)); const seen=new Set([target.key]);
-  const near=shuffle(E.filter(e=>!e.deleted&&e.kind===target.kind&&!shown.has(e.key)&&Math.abs(e.y-target.y)<=250));
-  const far=shuffle(E.filter(e=>!e.deleted&&e.kind===target.kind&&!shown.has(e.key)));
-  const dis=[];
-  for(const e of [...near,...far]){ if(!seen.has(e.key)){seen.add(e.key);dis.push(e.key)} if(dis.length===3)break; }
+  const dis=confusables(target,shown).slice(0,3).map(c=>c.key);
   return {type:'fill',theme:t==='mix'?'時代をまたいだ総合問題':THEMES[t],rows,target,options:shuffle([target.key,...dis])};
 }
 
@@ -1387,7 +1554,8 @@ function exCombo(theme){
   let two=null; for(let t=0;t<20&&!two;t++){ const c=pickSpread(P,2); if(c&&c[0].key!==c[1].key&&c[0].kind===c[1].kind&&(t>12||Math.abs(c[0].y-c[1].y)<=200)) two=c; }
   if(!two){ two=pickSpread(P,2); if(!two||two[0].key===two[1].key) return null; }
   two.sort((a,b)=>a.y-b.y);
-  const d1=distractorKey(two[0],[two[1].key]), d2=distractorKey(two[1],[two[0].key,d1]);
+  const c1=confusables(two[0],[two[1].key]), d1=c1.length?c1[Math.floor(Math.random()*Math.min(2,c1.length))].key:distractorKey(two[0],[two[1].key]);
+  const c2=confusables(two[1],[two[0].key,d1]), d2=c2.length?c2[Math.floor(Math.random()*Math.min(2,c2.length))].key:distractorKey(two[1],[two[0].key,d1]);
   if(!d1||!d2) return null;
   const combos=shuffle([[two[0].key,two[1].key],[two[0].key,d2],[d1,two[1].key],[d1,d2]]);
   const ans=combos.findIndex(c=>c[0]===two[0].key&&c[1]===two[1].key);
@@ -1521,17 +1689,21 @@ function themeSelect(id,val,withMix,counter){
     ${withMix?`<option value="mix" ${val==='mix'?'selected':''}>テーマなし（時代をまたいで混ぜる）</option>`:''}
     <optgroup label="テーマを指定">${Object.entries(THEMES).map(([k,v])=>`<option value="${k}" ${val===k?'selected':''}>${esc(v)}（${counter(k)}）</option>`).join('')}</optgroup></select>`;
 }
+const impChips=()=>[['canon','定番の流れだけ'],['prefer','定番を多めに'],['free','こだわらない']].map(([k,v])=>`<button class="chip" data-imp="${k}" aria-pressed="${S.ordImp===k}">${v}</button>`).join('');
+const obvChips=()=>`<button class="chip" data-obv="1" aria-pressed="${S.noObvious}">あからさまな組み合わせを除く</button><button class="chip" data-obv="0" aria-pressed="${!S.noObvious}">除かない</button>`;
+const spanChips=()=>[['free','こだわらない'],['same','同じ時代の中で'],['cross','すべて別の時代（時代をまたぐ）']].map(([k,v])=>`<button class="chip" data-span="${k}" aria-pressed="${S.span===k}">${v}</button>`).join('');
 const omodeChips=()=>[['strict','解説で全部つながる問題だけ'],['prefer','つながるできごとを優先'],['free','こだわらない']].map(([k,v])=>`<button class="chip" data-omode="${k}" aria-pressed="${S.omode===k}">${v}</button>`).join('');
 function renderControls(){
   document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===S.mode));
-  $('#eraRow').innerHTML='<span class="lab">時代</span>'+ERAS.map(([n,c])=>`<button class="chip" data-era="${n}" style="--c:var(${c})" aria-pressed="${S.eras.has(n)}"><span class="dot"></span>${n}</button>`).join('')
-    +(S.mode!=='essay'?`<button class="chip" data-world style="--c:var(--e-world)" aria-pressed="${S.world}"><span class="dot"></span>世界のできごと</button>`:'');
+  $('#eraRow').innerHTML='<div class="row"><span class="lab">時代</span>'+ERAS.map(([n,c])=>`<button class="chip" data-era="${n}" style="--c:var(${c})" aria-pressed="${S.eras.has(n)}"><span class="dot"></span>${n}</button>`).join('')
+    +(S.mode!=='essay'?`<button class="chip" data-world style="--c:var(--e-world)" aria-pressed="${S.world}"><span class="dot"></span>世界のできごと</button>`:'')
+    +(S.mode!=='essay'?`</div><div class="row" id="rankRow"><span class="lab">重要度</span>${[['A','A 重要'],['B','B 標準'],['C','C 発展']].map(([k,l])=>`<button class="chip rk rk${k}" data-rank="${k}" aria-pressed="${S.ranks.includes(k)}">${l}</button>`).join('')}<button class="chip" data-rw aria-pressed="${S.rankWeight}">重要なものを多めに出す</button>`:'')+'</div>';
   const cnt=k=>E.filter(e=>e.tags.includes(k)).length;
   const ecnt=k=>ESSAY.filter(e=>e.tags.includes(k)).length;
   let h='';
   if(S.mode==='order'){
     h=`<span class="lab">テーマ</span>${themeSelect('genTheme',S.theme,true,cnt)}</div><div class="row"><span class="lab">選択肢</span>`+
-      [['r','ランダム（3つか4つ）'],[3,'3つ'],[4,'4つ'],[5,'5つ']].map(([n,l])=>`<button class="chip" data-n="${n}" aria-pressed="${S.n===n}">${l}</button>`).join('')+`</div><div class="row"><span class="lab">出し方</span>${omodeChips()}`;
+      [['r','ランダム（3つか4つ）'],[3,'3つ'],[4,'4つ'],[5,'5つ']].map(([n,l])=>`<button class="chip" data-n="${n}" aria-pressed="${S.n===n}">${l}</button>`).join('')+`</div><div class="row"><span class="lab">出し方</span>${omodeChips()}</div><div class="row"><span class="lab">時代の範囲</span>${spanChips()}</div><div class="row"><span class="lab">易しすぎ</span>${obvChips()}</div><div class="row"><span class="lab">順番の重要度</span>${impChips()}`;
   }else if(S.mode==='fill'){
     h=`<span class="lab">テーマ</span>${themeSelect('genTheme',S.theme,true,cnt)}</div><div class="row"><span class="lab">答え方</span>
        <button class="chip" data-choice="1" aria-pressed="${S.choice}">選択肢から選ぶ</button>
@@ -1546,7 +1718,7 @@ function renderControls(){
     h=`<span class="lab">テーマ</span><select class="sel" id="themeSel" aria-label="テーマで絞り込む"><option value="all">すべてのテーマ</option>${
       Object.entries(THEMES).map(([k,v])=>`<option value="${k}" ${S.listTheme===k?'selected':''}>${esc(v)}（${cnt(k)}）</option>`).join('')
     }</select></div><div class="row"><span class="lab">表示</span>
-      <button class="chip" data-lk="ev" aria-pressed="${S.listKind==='ev'}">できごと</button><button class="chip" data-lk="es" aria-pressed="${S.listKind==='es'}">記述問題</button>
+      <button class="chip" data-lk="ev" aria-pressed="${S.listKind==='ev'}">できごと</button><button class="chip" data-lk="es" aria-pressed="${S.listKind==='es'}">記述問題</button><button class="chip" data-lk="lk" aria-pressed="${S.listKind==='lk'}">つながり</button>
       <span class="sep"></span>
       <button class="chip" data-lf="all" aria-pressed="${S.listFilter==='all'}">ふつう</button><button class="chip" data-lf="edited" aria-pressed="${S.listFilter==='edited'}">変更したもの</button><button class="chip" data-lf="deleted" aria-pressed="${S.listFilter==='deleted'}">消したもの</button>
     </div><div class="row"><span class="lab">検索</span><input class="search" id="listQ" type="search" placeholder="語句で検索（例：条約）" value="${esc(S.q)}" aria-label="語句で検索">`;
@@ -1571,7 +1743,7 @@ function newQuestion(){
 function render(){
   const q=$('#q'); const c=S.cur;
   if(!c){q.innerHTML=`<div class="empty">${S.mode==='order'&&S.omode==='strict'?'「解説で全部つながる問題だけ」では、この時代とテーマの組み合わせの問題が作れません。テーマを「おまかせ」にするか、出し方を変えてください。':'この時代とテーマの組み合わせでは問題が作れません。時代を増やすか、テーマを変えてください。'}</div>`;return;}
-  if(c.type==='order') q.innerHTML=`<div class="qhead"><span class="qno">第${S.qno}問</span><span class="tag">${esc(c.theme)}</span></div>`+renderOrder(c);
+  if(c.type==='order'){ if(!c.imp) c.imp=orderImportance(c.items); q.innerHTML=`<div class="qhead"><span class="qno">第${S.qno}問</span><span class="tag">${esc(c.theme)}</span><span class="imp imp${c.imp.level}">順番：${IMP_LABEL[c.imp.level]}</span></div>`+renderOrder(c); }
   if(c.type==='fill') q.innerHTML=`<div class="qhead"><span class="qno">第${S.qno}問</span><span class="tag">${esc(c.theme)}</span></div>`+renderFill(c);
   if(c.type==='exam') q.innerHTML=`<div class="qhead"><span class="qno">第${S.qno}問</span><span class="tag">${esc(c.theme)}</span></div>`+renderExam(c);
   if(c.type==='essay') q.innerHTML=`<div class="qhead"><span class="qno">第${S.qno}問</span><span class="era" style="--c:var(${ERA_COLOR[c.q.era]})">${c.q.era}</span></div>`+renderEssay(c);
@@ -1612,8 +1784,9 @@ function flowHTML(evs,labels,tk){
   let h='<div class="flow">';
   if(tk&&FLOW[tk]) h+=`<p class="flow-sum"><span class="fs-l">流れ</span>${esc(FLOW[tk])}</p>`;
   evs.forEach((e,k)=>{
-    h+=`<div class="fl-item"><span class="kana">${labels[k]}</span><span class="y">${yv(e)}${yu(e)}</span><span>${eraTag(e)} ${filled(e)}</span></div>`;
-    if(k<steps.length){ const s=steps[k]; h+=`<div class="fl-step ${s.kind}"><span class="ar" aria-hidden="true"></span><span>${s.kind==='cause'?'<span class="why-l">つながり</span>':''}${esc(s.t)}</span></div>`; }
+    h+=`<div class="fl-item"><span class="kana">${labels[k]}</span><span class="y">${yv(e)}${yu(e)}</span><span>${eraTag(e)}${rankTag(e)} ${filled(e)}</span></div>`;
+    if(k<steps.length){ const s=steps[k]; const nx=evs[k+1]; const bk=pairKey(e,nx); const ob=obviousPair(e,nx);
+      h+=`<div class="fl-step ${s.kind}"><span class="ar" aria-hidden="true"></span><span>${s.kind==='cause'?'<span class="why-l">つながり</span>':''}${canonPair(e,nx)?`<span class="canon-l">定番：${esc(canonPair(e,nx))}</span>`:''}${esc(s.t)}${ob&&!BAN.has(bk)?`<span class="obv">あからさま：${esc(ob)}</span>`:''}<button class="banbtn" data-ban="${e.sid}~${nx.sid}">${BAN.has(bk)?'一緒に出さない（登録ずみ・取り消す）':'この2つを一緒に出さない'}</button></span></div>`; }
   });
   return h+'</div>';
 }
@@ -1688,6 +1861,7 @@ function renderList(){
   const edBtn=e=>Store.canEdit?(e.deleted?`<button class="btn sm" data-revive="${e.sid}">復活する</button>`:`<button class="btn sm" data-edit="${e.sid}">編集</button>`):'';
   const badge=e=>e.deleted?'<span class="badge del">削除中</span>':e.edited?'<span class="badge">変更あり</span>':'';
   const filterLabel={all:'',edited:'（変更したもの）',deleted:'（消したもの）'}[S.listFilter];
+  if(S.listKind==='lk'){ q.innerHTML=renderLinks(qn,hl); return; }
   if(S.listKind==='es'){
     const list=ESSAY.filter(e=>S.eras.has(e.era)&&(S.listTheme==='all'||e.tags.includes(S.listTheme))&&fOk(e)&&(!qn||norm(e.q+e.a).includes(qn))).sort((a,b)=>a.y-b.y);
     let h=`<div class="list-head"><h2>記述問題${filterLabel}</h2><span class="cnt">${list.length}問</span></div>${flash}`;
@@ -1698,7 +1872,7 @@ function renderList(){
         <span class="rowbtns">${edBtn(e)}</span></div>`).join('')+'</div>';
     q.innerHTML=h+backupHTML(); focusEditor(); return;
   }
-  const list=E.filter(e=>S.eras.has(e.era)&&(S.world||!e.world)&&fOk(e)&&(S.listTheme==='all'||e.tags.includes(S.listTheme))&&(!qn||norm(e.text+e.alts.join('')).includes(qn)))
+  const list=E.filter(e=>S.eras.has(e.era)&&(S.world||!e.world)&&S.ranks.includes(e.rank)&&fOk(e)&&(S.listTheme==='all'||e.tags.includes(S.listTheme))&&(!qn||norm(e.text+e.alts.join('')).includes(qn)))
     .sort((a,b)=>a.y-b.y||a.id-b.id);
   const title=(S.listTheme==='all'?'すべてのできごと':THEMES[S.listTheme])+filterLabel;
   let h=`<div class="list-head"><h2>${esc(title)}</h2><span class="cnt">${list.length}件・古い順</span></div>${flash}
@@ -1713,13 +1887,32 @@ function renderList(){
     }
     if(S.editing===e.sid){ body+=`<div class="nen ed-row"><span class="y">${yv(e)}<small>${yu(e)}</small></span>${editorHTML(e.sid)}</div>`; continue; }
     const on=S.sel.has(e.id);
-    body+=`<div class="nen pick${on?' on':''}${e.deleted?' gone':''}"><span class="y">${yv(e)}<small>${yu(e)}</small></span><span class="t"><span class="top">${eraTag(e)}${badge(e)}</span><span>${hl(filled(e))}${e.alts.length>1?`<span class="alts">（別解：${esc(e.alts.slice(1).join('／'))}）</span>`:''}</span><span class="ths">${
+    body+=`<div class="nen pick${on?' on':''}${e.deleted?' gone':''}"><span class="y">${yv(e)}<small>${yu(e)}</small></span><span class="t"><span class="top">${eraTag(e)}${rankTag(e)}${badge(e)}</span><span>${hl(filled(e))}${e.alts.length>1?`<span class="alts">（別解：${esc(e.alts.slice(1).join('／'))}）</span>`:''}</span><span class="ths">${
       e.tags.map(t=>`<button class="th" data-theme-pick="${t}" aria-pressed="${S.listTheme===t}">${esc(THEMES[t])}</button>`).join('')}</span></span>
       <span class="rowbtns">${e.deleted?'':`<button class="selbtn" data-sel="${e.id}" aria-pressed="${on}" aria-label="${on?'選択を外す':'選ぶ'}">${on?'✓':'＋'}</button>`}${edBtn(e)}</span></div>`;
   }
   q.innerHTML=h+body+'</div>'+backupHTML(); focusEditor();
 }
 function focusEditor(){ const t=document.querySelector('.editor textarea'); if(t&&S.editFocus){ t.focus({preventScroll:true}); S.editFocus=false; t.closest('.nen').scrollIntoView({block:'center'}); } }
+// 登録してある「原因→結果」のつながり一覧
+function renderLinks(qn,hl){
+  const rows=[];
+  for(const k in LINKMAP){ const [a,b]=k.split('>'); const A=bySid(a), B=bySid(b); if(!A||!B) continue; rows.push({A,B,t:LINKMAP[k]}); }
+  const inTheme=r=>S.listTheme==='all'||r.A.tags.includes(S.listTheme)||r.B.tags.includes(S.listTheme);
+  const inEra=r=>S.eras.has(r.A.era)||S.eras.has(r.B.era);
+  const hit=r=>!qn||norm(r.A.text+r.A.key+r.B.text+r.B.key+r.t).includes(qn);
+  const list=rows.filter(r=>inTheme(r)&&inEra(r)&&hit(r)&&(S.listFilter!=='deleted'||(r.A.deleted||r.B.deleted))).sort((x,y)=>x.A.y-y.A.y||x.B.y-y.B.y);
+  // 全部つながる問題の数（今の時代・テーマの条件で）
+  let L=pool(); if(S.listTheme!=='all') L=L.filter(e=>e.tags.includes(S.listTheme));
+  const c4=strictChains(L,4).length, c3=strictChains(L,3).length;
+  const title=(S.listTheme==='all'?'すべてのつながり':'つながり：'+THEMES[S.listTheme]);
+  let h=`<div class="list-head"><h2>${esc(title)}</h2><span class="cnt">${list.length}組</span></div>
+    <p class="hint-line">並び替えの解説に使う「原因 → 結果」の組です。この条件で「解説で全部つながる問題」は、4つの組み合わせが<b>${c4}</b>通り、3つの組み合わせが<b>${c3}</b>通り作れます。</p>`;
+  if(!list.length) return h+'<div class="empty">条件に合うつながりはありません。</div>';
+  const one=e=>`<span class="lk-ev${e.deleted?' gone':''}"><span class="lk-y">${yv(e)}${yu(e)}</span>${eraTag(e)} <b>${hl(esc(e.key))}</b>${e.deleted?'<span class="badge del">削除中</span>':''}</span>`;
+  h+='<div class="lk-list">'+list.map(r=>`<div class="lk-row"><div class="lk-pair">${one(r.A)}<span class="lk-ar" aria-label="から">→</span>${one(r.B)}</div><div class="lk-t">${hl(esc(r.t))}</div></div>`).join('')+'</div>';
+  return h;
+}
 function renderSelBar(){
   const bar=$('#selBar'); const n=S.sel.size;
   bar.hidden=!(n>0&&(S.mode==='list'||S.mode==='print'));
@@ -1738,10 +1931,12 @@ function buildSheet(){
   for(const ids of S.custom){ const items=shuffle(ids.map(byId).filter(e=>!e.deleted)); sheet.orders.push({theme:'えらんだできごと',custom:ids,items}); items.forEach(e=>used.add(e.id)); }
   const keepLast=S.lastTheme; S.lastTheme=null;
   for(let i=0;i<pr.order;i++){
-    const q=makeOrder(S.theme,pr.orderN,used); if(!q) {sheet.note.push('並び替え問題を指定の数だけ作れませんでした。');break;}
+    S.avoidThemes=sheet.orders.map(o=>o.tk).filter(Boolean);
+    let q=makeOrder(S.theme,pr.orderN,used); if(!q){ S.avoidThemes=[]; q=makeOrder(S.theme,pr.orderN,used); }
+    if(!q) {sheet.note.push('並び替え問題を指定の数だけ作れませんでした。');break;}
     q.items.forEach(e=>used.add(e.id)); sheet.orders.push({theme:q.theme,tk:q.tk,items:q.items});
   }
-  S.lastTheme=keepLast;
+  S.lastTheme=keepLast; S.avoidThemes=[];
   if(pr.fill>0){ sheet.fill=makeFill(pr.fill); if(!sheet.fill) sheet.note.push('年表の穴埋めを作れるだけのできごとがありません。'); }
   sheet.exams=[]; for(let i=0;i<pr.exam;i++){ const q=makeExam('rand',S.theme); if(q) sheet.exams.push(q); }
   const EP=shuffle(essayPool(S.theme)); sheet.essays=EP.slice(0,pr.essay);
@@ -1762,18 +1957,31 @@ function makeFill(n,tkFixed){
 function sortFill(f){
   f.rows.sort((a,b)=>a.y-b.y||a.id-b.id);
   const keys=new Set(f.rows.map(r=>r.key));
-  const extra=shuffle(E.filter(e=>!e.deleted&&!keys.has(e.key)&&Math.abs(e.y-f.rows[0].y)<400)).map(e=>e.key).filter((k,i,a)=>a.indexOf(k)===i).slice(0,Math.min(3,Math.ceil(f.rows.length/3)));
-  f.bank=shuffle([...keys,...extra]);
+  // 各行について一番まぎらわしい語句を求め、点数の高いものから語群に加える
+  const cands=[]; f.rows.forEach(r=>{ const c=confusables(r,keys)[0]; if(c) cands.push({...c,forKey:r.key}); });
+  cands.sort((a,b)=>b.sc-a.sc||a.d-b.d);
+  const n=Math.min(4,Math.max(2,Math.ceil(f.rows.length/3))); const used=new Set(); f.extra=[];
+  for(const c of cands){ if(used.has(c.key)) continue; used.add(c.key); f.extra.push(c); if(f.extra.length>=n) break; }
+  f.bank=[...keys,...f.extra.map(c=>c.key)].sort((a,b)=>a.localeCompare(b,'ja'));
 }
 function sheetUsed(except){ const u=new Set(); S.sheet.orders.forEach(o=>{ if(o!==except) o.items.forEach(e=>u.add(e.id)); }); return u; }
 // 個別の問題の差し替え・削除
 function reOrder(i){
   const o=S.sheet.orders[i];
   if(o.custom){ let it; do{ it=shuffle(o.items); }while(o.items.length>2&&it.every((e,k)=>e===o.items[k])); o.items=it; return true; }
-  const th=o.tk||(S.theme==='auto'?'auto':S.theme);
   const keep=S.lastTheme; S.lastTheme=o.tk||null;
-  let q=null; for(let t=0;t<10&&!q;t++){ const c=makeOrder(t<3?th:S.theme,S.pr.orderN==='r'?'r':o.items.length,sheetUsed(o)); if(c&&!c.items.every(e=>o.items.includes(e))) q=c; }
-  S.lastTheme=keep;
+  const allUsed=new Set(); S.sheet.orders.forEach(x=>x.items.forEach(e=>allUsed.add(e.id)));
+  const others=S.sheet.orders.filter(x=>x!==o).map(x=>x.tk).filter(Boolean);
+  const nn=S.pr.orderN==='r'?'r':o.items.length;
+  let q=null;
+  // 1) 今の問題とほかの問題のできごとをすべて除き、まだ使っていないテーマから
+  S.exclude=allUsed; S.avoidThemes=[o.tk,...others].filter(Boolean);
+  for(let t=0;t<6&&!q;t++) q=makeOrder(S.theme,nn,allUsed);
+  // 2) テーマの制限をゆるめる（できごとの重なりは許さない）
+  if(!q){ S.avoidThemes=[o.tk].filter(Boolean); for(let t=0;t<6&&!q;t++) q=makeOrder(S.theme,nn,allUsed); }
+  // 3) 今の問題のできごとだけは必ず除く
+  if(!q){ S.exclude=new Set(o.items.map(e=>e.id)); S.avoidThemes=[]; for(let t=0;t<6&&!q;t++) q=makeOrder(S.theme,nn,allUsed); }
+  S.exclude=null; S.avoidThemes=[]; S.lastTheme=keep;
   if(!q){ S.sheet.note=['この問題と入れ替えられる別の組み合わせが見つかりませんでした。']; return false; }
   S.sheet.orders[i]={theme:q.theme,tk:q.tk,items:q.items}; return true;
 }
@@ -1810,12 +2018,55 @@ function addEssay(){
 }
 const tools=(kind,i,label)=>`<span class="qtools"><button class="tbtn" data-q="re-${kind}" data-qi="${i}">${label||'この問題を変える'}</button><button class="tbtn del" data-q="rm-${kind}" data-qi="${i}" aria-label="削除">消す</button></span>`;
 function useOn(sh,i){ const k=sh.essays[i]&&sh.essays[i].id; const o=(sh.noUse||{})[k]; return o===undefined?S.hint:o; }
+// 並び替えの候補をたくさん出して、プリントに入れるものを選ぶ
+function genCands(k,append){
+  if(!append) S.cands=[];
+  const seen=new Set(S.cands.map(c=>c.items.map(e=>e.id).sort().join(',')));
+  const used=new Set(); S.cands.forEach(c=>c.items.forEach(e=>used.add(e.id)));
+  const keep=S.lastTheme; let fails=0;
+  while(S.cands.length<(append?S.cands.length+0:0)+k&&fails<k*4){
+    S.avoidThemes=S.cands.slice(-3).map(c=>c.tk).filter(Boolean);
+    const q=makeOrder(S.theme,S.pr.orderN,used);
+    S.avoidThemes=[];
+    if(!q){ fails++; continue; }
+    const key=q.items.map(e=>e.id).sort().join(',');
+    if(seen.has(key)){ fails++; continue; }
+    seen.add(key); q.items.forEach(e=>used.add(e.id));
+    S.cands.push({theme:q.theme,tk:q.tk,items:q.items,sel:false});
+    if(append&&S.cands.length>=S.candTarget) break;
+  }
+  S.lastTheme=keep;
+}
+function candsHTML(){
+  if(!S.candOpen) return `<div class="cand-open"><button class="btn" data-act="copen">並び替えを候補から選ぶ（たくさん表示）</button></div>`;
+  const c=S.cands||[]; const nsel=c.filter(x=>x.sel).length;
+  let h=`<section class="cands-wrap"><div class="cands-head"><h3>並び替えの候補</h3><span class="cnt">${c.length}問中 <b>${nsel}</b>問を選択中</span></div>
+    <p class="hint-line">上の設定（テーマ・時代・出し方・選択肢の数など）で作った候補です。プリントに入れたい問題をクリックして選んでください。</p>
+    <div class="actions" style="justify-content:flex-start">
+      <button class="btn" data-act="cgen">候補を作り直す</button><button class="btn" data-act="cmore">さらに20問表示</button>
+      <button class="btn" data-act="cclear" ${nsel?'':'disabled'}>選択を解除</button>
+      <button class="btn" data-act="cadd" ${nsel?'':'disabled'}>選んだ問題をプリントに追加</button>
+      <button class="btn primary" data-act="creplace" ${nsel?'':'disabled'}>選んだ問題でプリントの並び替えを置きかえる</button>
+      <button class="btn" data-act="cclose">閉じる</button></div>`;
+  if(!c.length) return h+'<div class="empty">この条件では候補を作れませんでした。</div></section>';
+  h+='<div class="cands">'+c.map((x,i)=>{
+    const cor=correctOrder(x.items); const st=flowSteps(cor.map(k=>x.items[k])); const nc=st.filter(t=>t.kind==='cause').length;
+    return `<button class="cand${x.sel?' on':''}" data-cand="${i}" aria-pressed="${x.sel}">
+      <span class="cand-top"><span class="cand-no">${i+1}</span><span class="tag">${esc(x.theme)}</span><span class="cand-ck">${x.sel?'✓ 選択中':'＋ 選ぶ'}</span></span>
+      <span class="cand-items">${x.items.map((e,j)=>`<span><b>${KANA[j]}</b>${plain(e)}</span>`).join('')}</span>
+      <span class="cand-ans"><span class="imp imp${orderImportance(x.items).level}">順番：${IMP_LABEL[orderImportance(x.items).level]}</span>　重要度 ${x.items.map(e=>e.rank).join('')}　／　答え ${cor.map(k=>KANA[k]).join('→')}　／　${cor.map(k=>yv(x.items[k])).join('・')}　／　つながり ${nc}/${st.length}</span></button>`;
+  }).join('')+'</div></section>';
+  return h;
+}
 function renderPrint(){
   const pr=S.pr, sh=S.sheet;
   const opt=(id,vals,cur,unit)=>`<select class="sel" id="${id}">${vals.map(v=>`<option value="${v}" ${v===cur?'selected':''}>${v}${unit}</option>`).join('')}</select>`;
   let h=`<div class="pset">
     <div class="pset-row"><label for="prTitle">タイトル</label><input class="search" id="prTitle" value="${esc(pr.title)}"></div>
     <div class="pset-row"><label>並び替えの出し方</label>${omodeChips()}</div>
+    <div class="pset-row"><label>並び替えの時代</label>${spanChips()}</div>
+    <div class="pset-row"><label>易しすぎる問題</label>${obvChips()}</div>
+    <div class="pset-row"><label>順番の重要度</label>${impChips()}</div>
     <div class="pset-row"><label>並び替え</label>${opt('prOrder',[0,1,2,3,4,5,6,8,10],pr.order,'問')}<select class="sel" id="prOrderN">${[['r','選択肢3つか4つ（混ぜる）'],[3,'選択肢3つずつ'],[4,'選択肢4つずつ'],[5,'選択肢5つずつ']].map(([v,l])=>`<option value="${v}" ${v===pr.orderN?'selected':''}>${l}</option>`).join('')}</select></div>
     <div class="pset-row"><label>年表の穴埋め</label>${opt('prFill',[0,4,6,8,10,12,15],pr.fill,'か所')}
       <button class="chip" data-prbank aria-pressed="${pr.bank}">語群をつける</button></div>
@@ -1826,7 +2077,7 @@ function renderPrint(){
     <div class="actions"><button class="btn" data-act="tolist2">一覧から問題を選ぶ</button><button class="btn" data-act="rebuild">問題を作り直す</button><button class="btn primary" data-act="print">印刷する</button></div>
     <p class="hint-line">印刷はA4たて向き。このプレビュー画面では印刷ボタンがはたらかないことがあります。そのときはダウンロード版のHTMLファイルをブラウザで開いて印刷してください。</p>
     ${sh.note.length?`<p class="warn">${sh.note.map(esc).join('<br>')}</p>`:''}
-  </div><div id="sheets">${sheetHTML(sh)}</div>`;
+  </div>${candsHTML()}<div id="sheets">${sheetHTML(sh)}</div>`;
   $('#q').innerHTML=h;
 }
 
@@ -1856,7 +2107,7 @@ function sheetHTML(sh){
       <div class="addrow"><button class="tbtn" data-q="add-frow">＋ 年表に1行追加</button></div>
       ${pr.bank?`<div class="bank"><span class="bl">語群</span>${f.bank.map(k=>`<span>${esc(k)}</span>`).join('')}</div>`:''}
       <div class="agrid">${f.rows.map((r,i)=>`<div><span>${MARU[i]}</span></div>`).join('')}</div></section>`;
-    a+=`<section class="dai"><h4><span class="dn">${dai}</span>年表の穴埋め</h4><div class="agrid ans">${f.rows.map((r,i)=>`<div><span>${MARU[i]}</span>${esc(r.alts.join('／'))}</div>`).join('')}</div></section>`;
+    a+=`<section class="dai"><h4><span class="dn">${dai}</span>年表の穴埋め</h4><div class="agrid ans">${f.rows.map((r,i)=>`<div><span>${MARU[i]}</span>${esc(r.alts.join('／'))}</div>`).join('')}</div>${pr.bank&&f.extra&&f.extra.length?`<ol class="alist" style="margin-top:4px">${f.extra.map(c=>`<li><span class="why">語群の「${esc(c.key)}」は${ySpan(c.x)}の語句（「${esc(c.forKey)}」とまぎらわしい：${esc(c.why.slice(0,2).join('・'))}）。</span></li>`).join('')}</ol>`:''}</section>`;
   }
   if(sh.exams&&sh.exams.length){
     dai++;
@@ -1883,7 +2134,8 @@ document.addEventListener('click',ev=>{
   const b=ev.target.closest('button'); if(!b) return;
   const c=S.cur;
   if(b.dataset.mode){S.editing=null;setMode(b.dataset.mode);return;}
-  if(b.dataset.edit){S.editing=b.dataset.edit;S.editFocus=true;renderList();return;}
+  if(b.dataset.edrank){ S.edRank=b.dataset.edrank; document.querySelectorAll('[data-edrank]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.edrank===S.edRank)); return; }
+  if(b.dataset.edit){S.edRank=null;S.editing=b.dataset.edit;S.editFocus=true;renderList();return;}
   if(b.dataset.revive){b.disabled=true;setDeleted(b.dataset.revive,false).then(()=>{S.flash='復活しました。';renderList();});return;}
   if(b.dataset.restore!==undefined){const sid=S.editing; const rec=EDITS[sid]; const v=b.dataset.restore==='orig'?origOf(sid):rec.history[+b.dataset.restore].v; b.disabled=true;
     saveVersion(sid,clone(v)).then(ok=>{ if(ok){S.flash='文章をもどしました。';} renderList(); }); return;}
@@ -1893,7 +2145,10 @@ document.addEventListener('click',ev=>{
   if(b.dataset.themePick){S.listTheme=S.listTheme===b.dataset.themePick?'all':b.dataset.themePick;renderControls();renderList();$('.list-head').scrollIntoView({block:'start',behavior:'smooth'});return;}
   if(b.dataset.sel!==undefined){const id=+b.dataset.sel; S.sel.has(id)?S.sel.delete(id):S.sel.add(id);
     const row=b.closest('.nen'); const on=S.sel.has(id); row.classList.toggle('on',on); b.setAttribute('aria-pressed',on); b.textContent=on?'✓':'＋'; renderSelBar(); return;}
+  if(b.dataset.rank){ const k=b.dataset.rank; if(S.ranks.includes(k)){ if(S.ranks.length>1) S.ranks=S.ranks.filter(x=>x!==k); } else S.ranks=[...S.ranks,k].sort(); renderControls(); newQuestion(); return; }
+  if(b.hasAttribute('data-rw')){ S.rankWeight=!S.rankWeight; renderControls(); newQuestion(); return; }
   if(b.hasAttribute('data-world')){S.world=!S.world;renderControls();newQuestion();return;}
+  if(b.dataset.cand!==undefined){ const x=S.cands[+b.dataset.cand]; x.sel=!x.sel; const y=window.scrollY; renderPrint(); window.scrollTo({top:y}); return; }
   if(b.dataset.q&&S.sheet){
     const i=+(b.dataset.qi||0), sh=S.sheet; sh.note=[];
     switch(b.dataset.q){
@@ -1916,6 +2171,10 @@ document.addEventListener('click',ev=>{
     }
     const y=window.scrollY; renderPrint(); window.scrollTo({top:y}); return;
   }
+  if(b.dataset.imp){S.ordImp=b.dataset.imp;renderControls();if(S.mode==='print'){buildSheet();renderPrint();}else newQuestion();return;}
+  if(b.dataset.obv){S.noObvious=b.dataset.obv==='1';renderControls();if(S.mode==='print'){buildSheet();renderPrint();}else newQuestion();return;}
+  if(b.dataset.ban){ const [x,y]=b.dataset.ban.split('~'); const k=[x,y].sort().join('~'); if(BAN.has(k)) BAN.delete(k); else BAN.add(k); saveBan(); render(); return; }
+  if(b.dataset.span){S.span=b.dataset.span;renderControls();if(S.mode==='print'){buildSheet();renderPrint();}else newQuestion();return;}
   if(b.dataset.omode){S.omode=b.dataset.omode;renderControls();if(S.mode==='print'){buildSheet();renderPrint();}else newQuestion();return;}
   if(b.dataset.n){S.n=b.dataset.n==='r'?'r':+b.dataset.n;renderControls();newQuestion();return;}
   if(b.dataset.choice){S.choice=b.dataset.choice==='1';renderControls();if(S.answered)newQuestion();else render();return;}
@@ -1948,14 +2207,26 @@ document.addEventListener('click',ev=>{
     case 'retry': S.answered=false; S.cur=customQuestion(c.custom); S.qno++; render(); break;
     case 'tolist': case 'tolist2': setMode('list'); break;
     case 'rebuild': buildSheet(); renderPrint(); break;
+    case 'copen': S.candOpen=true; if(!S.cands||!S.cands.length) genCands(20); renderPrint(); break;
+    case 'cclose': S.candOpen=false; renderPrint(); break;
+    case 'cgen': genCands(20); renderPrint(); break;
+    case 'cmore': S.candTarget=(S.cands||[]).length+20; genCands(20,true); renderPrint(); break;
+    case 'cclear': S.cands.forEach(x=>x.sel=false); renderPrint(); break;
+    case 'cadd': case 'creplace': {
+      const picked=S.cands.filter(x=>x.sel).map(x=>({theme:x.theme,tk:x.tk,items:x.items.slice()}));
+      if(b.dataset.act==='creplace'){ S.sheet.orders=picked; S.custom=[]; } else S.sheet.orders.push(...picked);
+      S.cands.forEach(x=>x.sel=false); S.sheet.note=[`並び替えを${picked.length}問${b.dataset.act==='creplace'?'に置きかえました':'追加しました'}。`];
+      renderPrint(); document.getElementById('sheets').scrollIntoView({behavior:'smooth'}); break; }
     case 'edcancel': S.editing=null; renderList(); break;
     case 'edsave': { const sid=S.editing; const r=readEditor(sid); if(r.err){$('#edErr').textContent=r.err;break;} b.disabled=true;
-      saveVersion(sid,r.v).then(ok=>{ if(ok){S.editing=null;S.flash='保存しました。';} renderList(); }); break; }
+      saveVersion(sid,r.v).then(async ok=>{
+        if(ok&&ITEM[sid].kind==='ev'&&S.edRank&&S.edRank!==itemOf(sid).rank){ const o=baseRec(sid); o.rank=S.edRank===itemOf(sid).rank0?null:S.edRank; o.updatedAt=Date.now(); ok=await Store.put(sid,o); }
+        if(ok){S.editing=null;S.edRank=null;S.flash='保存しました。';} renderList(); }); break; }
     case 'eddel': { const sid=S.editing; S.editing=null; if(ITEM[sid].kind==='ev') S.sel.delete(itemOf(sid).id); b.disabled=true;
       setDeleted(sid,true).then(()=>{ S.flash='消しました。「消したもの」からいつでも復活できます。'; renderList(); renderSelBar(); }); break; }
     case 'bkcopy': { const t=$('#bkOut'); const done=()=>{b.textContent='コピーしました';}; try{ navigator.clipboard.writeText(t.value).then(done,()=>{t.select();}); }catch(e){ t.select(); } break; }
     case 'bkimport': { let m; try{ m=JSON.parse($('#bkIn').value); }catch(e){ S.flash='貼り付けた文字を読み取れませんでした。コピーした内容をそのまま貼り付けてください。'; renderList(); break; }
-      b.disabled=true; (async()=>{ let n=0; for(const k in m){ if(ITEM[k]&&m[k]&&typeof m[k]==='object'){ await Store.put(k,m[k]); n++; } } S.flash=`${n}件の編集データを取り込みました。`; renderList(); })(); break; }
+      b.disabled=true; if(Array.isArray(m.__ban)){ m.__ban.forEach(x=>BAN.add(x)); saveBan(); } (async()=>{ let n=0; for(const k in m){ if(ITEM[k]&&m[k]&&typeof m[k]==='object'){ await Store.put(k,m[k]); n++; } } S.flash=`${n}件の編集データを取り込みました。`; renderList(); })(); break; }
     case 'print': try{ window.print(); }catch(e){} break;
   }
 });
