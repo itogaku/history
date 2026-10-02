@@ -2359,11 +2359,13 @@ const tools=(kind,i,label)=>`<span class="qtools"><button class="tbtn" data-q="r
 function useOn(sh,i){ const k=sh.essays[i]&&sh.essays[i].id; const o=(sh.noUse||{})[k]; return o===undefined?S.hint:o; }
 // 並び替えの候補をたくさん出して、プリントに入れるものを選ぶ
 function genCands(k,append){
-  if(!append) S.cands=[];
+  // 作り直すときも、選んでいる問題は残す
+  if(!append) S.cands=(S.cands||[]).filter(x=>x.sel);
+  const base=S.cands.length;
   const seen=new Set(S.cands.map(c=>c.items.map(e=>e.id).sort().join(',')));
   const used=new Set(); S.cands.forEach(c=>c.items.forEach(e=>used.add(e.id)));
   const keep=S.lastTheme; let fails=0;
-  while(S.cands.length<(append?S.cands.length+0:0)+k&&fails<k*4){
+  while(S.cands.length<base+k&&fails<k*4){
     S.avoidThemes=S.cands.slice(-3).map(c=>c.tk).filter(Boolean);
     const q=makeOrder(S.theme,S.pr.orderN,used);
     S.avoidThemes=[];
@@ -2394,7 +2396,7 @@ function candsHTML(){
   let h=`<section class="cands-wrap"><div class="cands-head"><h3>並び替えの候補</h3><span class="cnt">${c.length}問中 <b>${nsel}</b>問を選択中</span></div>
     <p class="hint-line">上の設定（テーマ・時代・出し方・選択肢の数など）で作った候補です。プリントに入れたい問題をクリックして選んでください。</p>
     <div class="actions" style="justify-content:flex-start">
-      <button class="btn" data-act="cgen">候補を作り直す</button><button class="btn" data-act="cmore">さらに20問表示</button>
+      <button class="btn" data-act="cgen">候補を作り直す${nsel?'（選んだ'+nsel+'問は残す）':''}</button><button class="btn" data-act="cmore">さらに20問表示</button>
       <button class="btn" data-act="cclear" ${nsel?'':'disabled'}>選択を解除</button>
       <button class="btn" data-act="cadd" ${nsel?'':'disabled'}>選んだ問題をプリントに追加</button>
       <button class="btn primary" data-act="creplace" ${nsel?'':'disabled'}>選んだ問題でプリントの並び替えを置きかえる</button>
